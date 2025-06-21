@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Loader2, CheckCircle, X, Target, Lightbulb } from 'lucide-react';
+import CoverLetterPreview from './CoverLetterPreview';
+import Modal from './Modal';
 
 const coverLetterTemplates = [
     { id: 'modern', name: 'Modern', description: 'A clean, modern design with a clear header.' },
@@ -7,19 +9,6 @@ const coverLetterTemplates = [
     { id: 'professional', name: 'Professional', description: 'A bold design with a color header to stand out.' },
     { id: 'minimalist', name: 'Minimalist', description: 'A simple, elegant design with plenty of white space.' },
 ];
-
-const CoverLetterPreview = ({ content }) => {
-    return (
-        <div className="bg-white p-6 rounded-lg shadow-inner h-full border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Live Preview</h3>
-            <div 
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }}
-            ></div>
-        </div>
-    );
-};
-
 
 const CoverLetterForm = () => {
   const [formData, setFormData] = useState({
@@ -31,11 +20,12 @@ const CoverLetterForm = () => {
     experience: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState('');
+  const [generatedCoverLetter, setGeneratedCoverLetter] = useState('');
   const [keywordAnalysis, setKeywordAnalysis] = useState({ matches: [], missing: [] });
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const generateCoverLetterHTML = (data, templateId) => {
     const { name, email, jobTitle, companyName, experience } = data;
@@ -167,16 +157,18 @@ const CoverLetterForm = () => {
 
   useEffect(() => {
     const content = generateCoverLetterHTML(formData, selectedTemplate);
-    setGeneratedContent(content);
+    setGeneratedCoverLetter(content);
   }, [formData, selectedTemplate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
     // Simulate API call
     setTimeout(() => {
         setIsLoading(false);
-        alert('Cover Letter Generated!');
+        setGeneratedCoverLetter(generateCoverLetterHTML(formData, selectedTemplate));
+        setShowPreviewModal(true);
     }, 1000);
   };
 
@@ -195,6 +187,11 @@ const CoverLetterForm = () => {
   const handleTemplateSelect = (templateId) => {
     setSelectedTemplate(templateId);
     setShowTemplateModal(false);
+  };
+
+  const handleCloseModal = () => {
+    setShowPreviewModal(false);
+    setGeneratedCoverLetter('');
   };
 
   return (
@@ -328,7 +325,6 @@ const CoverLetterForm = () => {
       {/* Sidebar Section */}
       <div className="lg:col-span-1 space-y-6">
         <div className="sticky top-8">
-            <CoverLetterPreview content={generatedContent} />
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mt-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Lightbulb className="h-5 w-5 mr-2 text-yellow-500"/> ATS Optimization Tips</h3>
                 
@@ -390,6 +386,14 @@ const CoverLetterForm = () => {
           </div>
         </div>
       )}
+
+      <Modal 
+        isOpen={showPreviewModal} 
+        onClose={handleCloseModal} 
+        title="Your Generated Cover Letter"
+      >
+        <CoverLetterPreview content={generatedCoverLetter} />
+      </Modal>
     </div>
   );
 };

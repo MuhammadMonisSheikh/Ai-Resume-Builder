@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, Briefcase, GraduationCap, Award, Loader2, Target, FileText, CheckCircle, Star, Lightbulb, TrendingUp, ChevronDown, Plus, X, Monitor, Smartphone } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
 import ResumePreview from './ResumePreview';
+import Modal from './Modal';
 
 const ResumeForm = () => {
   const { saveOfflineData, getOfflineData, isOnline } = usePWA();
@@ -50,7 +51,8 @@ const ResumeForm = () => {
   const [lengthFeedback, setLengthFeedback] = useState('');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [generatedResumeData, setGeneratedResumeData] = useState(null);
   const [previewMode, setPreviewMode] = useState('Desktop');
 
   // Load saved form data on component mount
@@ -164,11 +166,11 @@ const ResumeForm = () => {
     }
     
     // This is a placeholder for where the generation logic would go.
-    // Since we're not sending to a server, we'll just show the success popup.
     setIsLoading(true);
     setTimeout(() => {
+      setGeneratedResumeData(formData);
+      setShowPreviewModal(true);
       setIsLoading(false);
-      setShowSuccessPopup(true);
     }, 1000);
   };
 
@@ -205,7 +207,6 @@ const ResumeForm = () => {
       references: '',
       photo: ''
     });
-    setShowSuccessPopup(false);
   };
 
   const handleChange = (e) => {
@@ -381,6 +382,11 @@ const ResumeForm = () => {
     const newLanguages = [...formData.languages];
     newLanguages.splice(index, 1);
     setFormData({ ...formData, languages: newLanguages });
+  };
+
+  const handleCloseModal = () => {
+    setShowPreviewModal(false);
+    setGeneratedResumeData(null);
   };
 
   return (
@@ -795,31 +801,13 @@ const ResumeForm = () => {
         </div>
       </form>
 
-      {/* Submission Complete Modal */}
-      {showSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 sm:p-8 md:p-10 text-center max-w-sm mx-auto">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Submission Complete!</h3>
-            <div className="mt-2 px-4 py-2">
-              <p className="text-sm text-gray-500">
-                Your ATS-friendly resume has been successfully created.
-              </p>
-            </div>
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setShowSuccessPopup(false)}
-                className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={showPreviewModal} 
+        onClose={handleCloseModal} 
+        title="Your Generated Resume"
+      >
+        {generatedResumeData && <ResumePreview content={generatedResumeData} />}
+      </Modal>
 
       {/* Template Preview Modal */}
       {showTemplateModal && previewTemplate && (
