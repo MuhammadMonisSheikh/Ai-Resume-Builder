@@ -404,7 +404,7 @@ const ResumeForm = () => {
                       onClick={() => handleTemplatePreview(template)} 
                       className={`cursor-pointer border-2 ${selectedTemplate === template.id ? 'border-blue-500' : 'border-gray-200'} rounded-lg p-2 hover:border-blue-400 transition-all relative group bg-white shadow-sm`}
                     >
-                      <img src={`/images/templates/${template.id}.png`} alt={`${template.name} resume template preview`} className="w-full h-auto rounded-md" />
+                      <img src={`/images/templates/${template.id}.png`} alt={`${template.name} resume template preview`} className="w-full h-auto rounded-md" onError={(e) => e.target.src = '/images/templates/placeholder.png'} />
                       <p className="text-center text-sm mt-2 font-semibold text-gray-700">{template.name}</p>
                       
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-all duration-300 rounded-md">
@@ -833,7 +833,7 @@ const ResumeForm = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
               <div className="bg-gray-100 p-2 rounded-lg">
-                  <img src={previewTemplate.image} alt={`${previewTemplate.name} resume template larger preview`} className="w-full h-auto rounded-md shadow-md bg-white"/>
+                  <img src={`/images/templates/${previewTemplate.id}.png`} alt={`${previewTemplate.name} resume template larger preview`} className="w-full h-auto rounded-md shadow-md bg-white" onError={(e) => e.target.src = '/images/templates/placeholder.png'}/>
               </div>
               <div className="flex flex-col justify-center space-y-4">
                 <div>
