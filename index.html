@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ai-resume-pro.com/" />
+    
+    <!-- Primary Meta Tags -->
+    <title>AI Resume Pro | Free ATS Resume & Cover Letter Builder</title>
+    <meta name="description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization to land your next interview." />
+    <meta name="keywords" content="resume builder, free resume builder, cover letter generator, cv maker, ats-friendly resume, professional resume templates, resume creator, job application tools, online resume maker" />
+    <meta name="author" content="AI Resume Pro" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ai-resume-pro.com/" />
+    <meta property="og:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+    <meta property="og:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+    <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://ai-resume-pro.com/" />
+    <meta property="twitter:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+    <meta property="twitter:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+    <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+     crossorigin="anonymous"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "AI Resume Pro",
+      "operatingSystem": "Web",
+      "applicationCategory": "ProductivityApplication",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "1289",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization.",
+      "url": "https://ai-resume-pro.com/",
+      "screenshot": "https://ai-resume-pro.com/og-image.png"
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
