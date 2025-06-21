@@ -1,17 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, Printer, CheckCircle, Eye, EyeOff, Smartphone, Monitor, Share2, Mail, Linkedin, Twitter } from 'lucide-react';
+import { Download, Printer, CheckCircle, Eye, EyeOff, Smartphone, Monitor, Share2, Mail, Linkedin, Twitter, FileDown } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const ResumePreview = ({ content, onDownload }) => {
   const [previewMode, setPreviewMode] = useState('desktop'); // 'desktop' or 'mobile'
   const [showATSNotes, setShowATSNotes] = useState(true);
   const [showShareOptions, setShowShareOptions] = useState(false);
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
   const shareMenuRef = useRef(null);
+  const downloadMenuRef = useRef(null);
+  const resumePreviewRef = useRef(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // Close share menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
         setShowShareOptions(false);
+      }
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target)) {
+        setShowDownloadOptions(false);
       }
     };
 
@@ -20,6 +29,48 @@ const ResumePreview = ({ content, onDownload }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleDownload = async (format) => {
+    if (!resumePreviewRef.current) return;
+    setIsDownloading(true);
+    setShowDownloadOptions(false);
+
+    const canvas = await html2canvas(resumePreviewRef.current, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      backgroundColor: '#ffffff',
+    });
+
+    const a = document.createElement('a');
+
+    switch (format) {
+      case 'png':
+        a.href = canvas.toDataURL('image/png');
+        a.download = 'resume.png';
+        a.click();
+        break;
+      case 'jpeg':
+        a.href = canvas.toDataURL('image/jpeg', 0.9);
+        a.download = 'resume.jpeg';
+        a.click();
+        break;
+      case 'pdf':
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('resume.pdf');
+        break;
+      default:
+        setIsDownloading(false);
+        return;
+    }
+    
+    setIsDownloading(false);
+  };
 
   const formatResumeContent = (content) => {
     if (typeof content !== 'string') {
@@ -323,26 +374,46 @@ const ResumePreview = ({ content, onDownload }) => {
             .skill-bar { height: 8px; background-color: #BDC3C7; border-radius: 4px; overflow: hidden; }
             .skill-level { height: 100%; background-color: #1ABC9C; }
           </style>
-          <div class="resume-container">
-            <div class="sidebar">
-              ${resumeData.photo ? `<div class="photo-container"><img src="${resumeData.photo}" alt="Profile" class="photo"/></div>` : ''}
-              ${getSectionHTML('LINKS', resumeData.linkedin, 'sidebar-section')}
-              ${getSectionHTML('LANGUAGES', resumeData.languages, 'sidebar-section')}
-              ${getSectionHTML('REFERENCES', resumeData.references, 'sidebar-section')}
-              ${getSectionHTML('HOBBIES', resumeData.hobbies, 'sidebar-section')}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <button onClick={() => setShowATSNotes(!showATSNotes)} className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+              {showATSNotes ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <span>{showATSNotes ? 'Hide' : 'Show'} ATS Notes</span>
+            </button>
+            <div className="relative" ref={shareMenuRef}>
+              <button
+                onClick={() => setShowShareOptions(prev => !prev)}
+                className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </button>
+              {showShareOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <button onClick={() => handleShare('email')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Email</button>
+                  <button onClick={() => handleShare('linkedin')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">LinkedIn</button>
+                  <button onClick={() => handleShare('twitter')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Twitter</button>
+                </div>
+              )}
             </div>
-            <div class="main-content">
-              <div class="header">
-                <div class="name">${resumeData.name || 'Don Draper'}</div>
-                <div class="title">${resumeData.jobTitle || 'ATS Templates Specialist'}</div>
-              </div>
-              ${getSectionHTML('ABOUT ME', resumeData.summary)}
-              ${getSectionHTML('WORK EXPERIENCE', getWorkExperienceHTML(resumeData.experience, 'default'))}
-              ${getSectionHTML('EDUCATION', resumeData.education)}
-              <div class="section">
-                <h2 class="section-title">SKILLS</h2>
-                <div class="section-content">${getSkillsHTML(resumeData.skills, 'modern-sidebar')}</div>
-              </div>
+            <button onClick={handlePrint} className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+              <Printer className="h-4 w-4" />
+              <span>Print</span>
+            </button>
+            <div className="relative" ref={downloadMenuRef}>
+              <button
+                onClick={() => setShowDownloadOptions(prev => !prev)}
+                className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+              >
+                <FileDown className="h-4 w-4" />
+                <span>Download</span>
+              </button>
+              {showDownloadOptions && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <button onClick={() => handleDownload('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download as PDF</button>
+                  <button onClick={() => handleDownload('png')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download as PNG</button>
+                  <button onClick={() => handleDownload('jpeg')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Download as JPEG</button>
+                </div>
+              )}
             </div>
           </div>
         `;
@@ -361,50 +432,6 @@ const ResumePreview = ({ content, onDownload }) => {
                 margin: 0;
                 padding: 0;
               }
-            </style>
-          </head>
-          <body>
-            ${formatResumeContent(content)}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
-
-  const handleDownload = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>ATS-Friendly Resume - ${new Date().toLocaleDateString()}</title>
-            <style>
-              body { 
-                font-family: Arial, sans-serif; 
-                line-height: 1.6; 
-                color: #333; 
-                max-width: 800px; 
-                margin: 0 auto; 
-                padding: 20px; 
-              }
-              h1 { 
-                color: #2563eb; 
-                border-bottom: 2px solid #2563eb; 
-                padding-bottom: 10px; 
-                font-size: 28px;
-                margin-bottom: 20px;
-              }
-              h2 { 
-                color: #1f2937; 
-                margin-top: 30px; 
-                margin-bottom: 15px; 
-                font-size: 18px;
-                border-bottom: 1px solid #e5e7eb;
-                padding-bottom: 5px;
-              }
-              p { margin-bottom: 10px; }
             </style>
           </head>
           <body>
@@ -449,154 +476,33 @@ const ResumePreview = ({ content, onDownload }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-6 w-6" />
-            <h2 className="text-xl font-bold">ATS-Friendly Resume Preview</h2>
-          </div>
-          <div className="flex space-x-2">
-            {/* Preview Mode Toggle */}
-            <div className="flex items-center space-x-2 bg-white/20 rounded-lg p-1">
-              <button
-                onClick={() => setPreviewMode('desktop')}
-                className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-all ${
-                  previewMode === 'desktop' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/20'
-                }`}
-              >
-                <Monitor className="h-4 w-4" />
-                <span className="text-sm">Desktop</span>
-              </button>
-              <button
-                onClick={() => setPreviewMode('mobile')}
-                className={`flex items-center space-x-1 px-3 py-1 rounded-md transition-all ${
-                  previewMode === 'mobile' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/20'
-                }`}
-              >
-                <Smartphone className="h-4 w-4" />
-                <span className="text-sm">Mobile</span>
-              </button>
-            </div>
-            
-            {/* ATS Notes Toggle */}
-            <button
-              onClick={() => setShowATSNotes(!showATSNotes)}
-              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-            >
-              {showATSNotes ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="text-sm">ATS Notes</span>
+    <div className="bg-gray-200 rounded-lg shadow-lg overflow-hidden relative">
+      <div className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <h3 className="text-lg font-bold">Resume Preview</h3>
+        <div className="flex items-center gap-2">
+          {/* Action buttons here */}
+          <div ref={downloadMenuRef} className="relative">
+            <button onClick={() => setShowDownloadOptions(p => !p)} className="flex items-center gap-2 bg-white/20 p-2 rounded-md">
+              <FileDown className="h-4 w-4" /> <span>Download</span>
             </button>
-            
-            {/* Share Button */}
-            <div className="relative" ref={shareMenuRef}>
-              <button
-                onClick={() => setShowShareOptions(!showShareOptions)}
-                className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-              >
-                <Share2 className="h-4 w-4" />
-                <span className="text-sm">Share</span>
-              </button>
-              
-              {showShareOptions && (
-                <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-2 z-10 min-w-[200px]">
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => handleShare('linkedin')}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                    >
-                      <Linkedin className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm">Share on LinkedIn</span>
-                    </button>
-                    <button
-                      onClick={() => handleShare('twitter')}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                    >
-                      <Twitter className="h-4 w-4 text-blue-400" />
-                      <span className="text-sm">Share on Twitter</span>
-                    </button>
-                    <button
-                      onClick={() => handleShare('email')}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                    >
-                      <Mail className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">Share via Email</span>
-                    </button>
-                    <button
-                      onClick={() => handleShare('native')}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                    >
-                      <Share2 className="h-4 w-4 text-gray-600" />
-                      <span className="text-sm">More Options</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <button
-              onClick={handlePrint}
-              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-            >
-              <Printer className="h-4 w-4" />
-              <span>Print</span>
-            </button>
-            <button
-              onClick={handleDownload}
-              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-            >
-              <Download className="h-4 w-4" />
-              <span>Download PDF</span>
-            </button>
+            {showDownloadOptions && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 z-20">
+                <button onClick={() => handleDownload('pdf')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">As PDF</button>
+                <button onClick={() => handleDownload('png')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">As PNG</button>
+                <button onClick={() => handleDownload('jpeg')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">As JPEG</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Resume Content */}
-      <div className={`p-6 ${previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''}`}>
-        <div 
-          className="resume-preview"
-          style={{
-            fontFamily: 'Arial, sans-serif',
-            lineHeight: '1.6',
-            color: '#333',
-            maxWidth: previewMode === 'mobile' ? '100%' : '800px',
-            margin: '0 auto',
-            fontSize: previewMode === 'mobile' ? '14px' : '16px'
-          }}
-          dangerouslySetInnerHTML={{ __html: formatResumeContent(content) }}
-        />
-      </div>
-
-      {/* ATS Tips */}
-      {showATSNotes && (
-        <div className="bg-blue-50 border-t border-blue-200 p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">ATS Optimization Tips</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
-            <div>
-              <h4 className="font-semibold mb-2">✓ What Works Well:</h4>
-              <ul className="space-y-1">
-                <li>• Standard fonts (Arial, Calibri, Times New Roman)</li>
-                <li>• Clear section headers</li>
-                <li>• Keyword-rich content</li>
-                <li>• Simple formatting</li>
-                <li>• Proper contact information</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-2">✗ Avoid These:</h4>
-              <ul className="space-y-1">
-                <li>• Complex graphics or images</li>
-                <li>• Tables or columns</li>
-                <li>• Unusual fonts</li>
-                <li>• Headers/footers</li>
-                <li>• Colorful backgrounds</li>
-              </ul>
-            </div>
+      <div className="relative">
+        <div ref={resumePreviewRef} dangerouslySetInnerHTML={{ __html: generateResumeHTML(content || {}) }} />
+        {isDownloading && (
+          <div className="absolute inset-0 bg-white/80 flex justify-center items-center z-10">
+            <p>Downloading...</p>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
