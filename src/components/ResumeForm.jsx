@@ -823,7 +823,7 @@ const ResumeForm = () => {
 
       {/* Template Preview Modal */}
       {showTemplateModal && previewTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full">
             <div className="p-6">
               <div className="flex justify-between items-start">
