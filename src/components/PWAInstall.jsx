@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
-import { usePWA } from '../hooks/usePWA';
+import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone, Monitor } from 'lucide-react';
 
 const PWAInstall = () => {
-  const { canInstall, triggerInstall } = usePWA();
+  const [canInstall, setCanInstall] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
 
-  const handleInstallClick = () => {
-    triggerInstall();
+  useEffect(() => {
+    const handleInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setInstallPrompt(null);
+        setCanInstall(false);
+      }
+    }
   };
 
   const handleDismiss = () => {

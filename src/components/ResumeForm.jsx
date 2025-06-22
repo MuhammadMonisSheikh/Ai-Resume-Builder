@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Briefcase, GraduationCap, Award, Loader2, Target, FileText, CheckCircle, Star, Lightbulb, TrendingUp, ChevronDown, Plus, X, Monitor, Smartphone } from 'lucide-react';
+import { User, Briefcase, GraduationCap, Award, Loader2, Target, FileText, CheckCircle, Star, Lightbulb, TrendingUp, ChevronDown, Plus, X, Monitor, Smartphone, Sparkles, Code, Lock } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
+import { useAuth } from '../contexts/AuthContext';
 import ResumePreview from './ResumePreview';
 import Modal from './Modal';
+import CustomEditor from './CustomEditor';
+import AICommandPortal from './AICommandPortal';
+import AuthAwareContent from './auth/AuthAwareContent';
 
 const ResumeForm = () => {
   const { saveOfflineData, getOfflineData, isOnline } = usePWA();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -46,14 +51,20 @@ const ResumeForm = () => {
   const [missingKeywords, setMissingKeywords] = useState([]);
   const [keywordSuggestions, setKeywordSuggestions] = useState([]);
   const [showKeywordAnalysis, setShowKeywordAnalysis] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState('modern-sidebar');
   const [resumeLength, setResumeLength] = useState({ words: 0, characters: 0 });
   const [lengthFeedback, setLengthFeedback] = useState('');
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [generatedResumeData, setGeneratedResumeData] = useState(null);
   const [previewMode, setPreviewMode] = useState('Desktop');
+  const [aiLoading, setAiLoading] = useState({ summary: false, achievements: false, skills: false, ai: false });
+  const [aiGeneratedContent, setAiGeneratedContent] = useState('');
+  const [designPreference, setDesignPreference] = useState('auto');
+  const [generationCount, setGenerationCount] = useState(1);
+  const [showCustomEditor, setShowCustomEditor] = useState(false);
+  const [showAICommandPortal, setShowAICommandPortal] = useState(false);
+  const [aiCommandField, setAiCommandField] = useState('');
+  const [aiCommandIndex, setAiCommandIndex] = useState(null);
+  const previewRef = useRef(null);
 
   // Load saved form data on component mount
   useEffect(() => {
@@ -62,6 +73,19 @@ const ResumeForm = () => {
       setFormData(savedData);
       calculateResumeLength();
     }
+  }, []);
+
+  // Handle auth modal opening from AuthAwareContent
+  useEffect(() => {
+    const handleOpenAuthModal = () => {
+      // This will be handled by the Header component
+      window.dispatchEvent(new CustomEvent('openAuthModalFromForm'));
+    };
+
+    window.addEventListener('openAuthModal', handleOpenAuthModal);
+    return () => {
+      window.removeEventListener('openAuthModal', handleOpenAuthModal);
+    };
   }, []);
 
   // ATS-friendly industries
@@ -97,81 +121,84 @@ const ResumeForm = () => {
     'Analyzed', 'Optimized', 'Streamlined', 'Launched', 'Generated', 'Maintained', 'Trained', 'Mentored', 'Collaborated', 'Delivered'
   ];
 
-  // Resume templates
-  const resumeTemplates = [
-    {
-      id: 'modern-sidebar',
-      name: 'Modern Sidebar',
-      description: 'Two-column layout with a colored sidebar for contact info and links.',
-      color: 'blue',
-      atsFriendly: true
-    },
-    {
-      id: 'creative-timeline',
-      name: 'Creative Timeline',
-      description: 'A single-column layout that uses a timeline format for experience.',
-      color: 'purple',
-      atsFriendly: false
-    },
-    {
-      id: 'professional-accent',
-      name: 'Professional Accent',
-      description: 'A clean design with a subtle color accent bar.',
-      color: 'green',
-      atsFriendly: true
-    },
-    {
-      id: 'professional-modern',
-      name: 'Professional Modern',
-      description: 'A clean, two-column layout with a modern header and skill bars.',
-      color: 'cyan',
-      atsFriendly: true
-    },
-    {
-      id: 'executive-dark',
-      name: 'Executive Dark',
-      description: 'A striking design with a dark header, perfect for senior roles.',
-      color: 'gray',
-      atsFriendly: true
-    },
-    {
-      id: 'minimal',
-      name: 'Minimal Clean',
-      description: 'Simple, distraction-free layout for maximum ATS compatibility',
-      color: 'green',
-      atsFriendly: true
-    },
-    {
-      id: 'tech',
-      name: 'Tech/Developer',
-      description: 'Focuses on technical skills, projects, and GitHub links.',
-      color: 'indigo',
-      atsFriendly: true
-    }
-  ];
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     calculateATSScore();
-    
-    // Save final form data
     saveOfflineData('resumeForm', formData);
-    
-    // If offline, show offline message
     if (!isOnline) {
-      alert('You\'re currently offline. Your resume will be generated when you\'re back online.');
-      // Save for later processing
+      alert("You're currently offline. Your resume will be generated when you're back online.");
       saveOfflineData('pendingResume', formData);
       return;
     }
-    
-    // This is a placeholder for where the generation logic would go.
     setIsLoading(true);
-    setTimeout(() => {
-      setGeneratedResumeData(formData);
-      setShowPreviewModal(true);
-      setIsLoading(false);
-    }, 1000);
+    setAiGeneratedContent('');
+    
+    // Create a comprehensive prompt for dynamic design generation
+    const hasImage = formData.photo ? 'User has uploaded a profile photo that should be included in the design.' : 'No profile photo provided.';
+    const experienceLevel = formData.experienceLevel;
+    const industry = formData.targetIndustry;
+    const hasCertifications = formData.certifications ? 'User has certifications that should be highlighted.' : '';
+    const hasLanguages = formData.languages && formData.languages.length > 1 ? 'User has multiple languages that should be featured.' : '';
+    const hasAchievements = formData.achievements ? 'User has specific achievements that should be prominently displayed.' : '';
+    
+    // Design style instructions based on preference
+    const designStyleInstructions = {
+      'auto': 'Choose the most appropriate design style based on the industry and content.',
+      'modern': 'Use a modern, clean design with contemporary typography and subtle gradients.',
+      'professional': 'Use a traditional, professional design with conservative colors and layout.',
+      'creative': 'Use a creative, colorful design with bold colors and artistic elements.',
+      'minimalist': 'Use a minimalist design with lots of white space and simple typography.',
+      'tech': 'Use a tech-focused design with blue/purple colors and modern tech aesthetics.'
+    };
+    
+    const prompt = `Generate ${generationCount} professional, modern resume${generationCount > 1 ? 's' : ''} in HTML with dynamic design that adapts to the content. 
+
+Requirements:
+- Job Title: ${formData.jobTitle}
+- Experience Level: ${experienceLevel}
+- Industry: ${industry}
+- Design Style: ${designStyleInstructions[designPreference]}
+- ${hasImage}
+- ${hasCertifications}
+- ${hasLanguages}
+- ${hasAchievements}
+
+Design Guidelines:
+1. If user has a photo, create a layout that incorporates the image professionally (sidebar or header placement)
+2. Choose colors and styling that match the industry (tech=blue/purple, healthcare=green/blue, finance=navy/gold, etc.)
+3. Adapt layout based on content length and type
+4. Use modern, clean typography and spacing
+5. Make it ATS-friendly with clear section headers
+6. Include responsive design for mobile devices
+7. Use professional color schemes and gradients
+8. If user has many skills, use a grid or tag layout
+9. If user has achievements, make them stand out with icons or special formatting
+10. Include the user's photo as a base64 image if provided: ${formData.photo ? 'data:image/jpeg;base64,' + formData.photo.split(',')[1] : 'No image'}
+11. Follow the design style preference: ${designStyleInstructions[designPreference]}
+
+${generationCount > 1 ? `Generate ${generationCount} different design variations. Each should be clearly separated with a comment like <!-- DESIGN 1 -->, <!-- DESIGN 2 -->, etc.` : ''}
+
+User Data: ${JSON.stringify(formData)}
+
+Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS that look${generationCount > 1 ? '' : 's'} professional and modern. Include all the user's information in an organized, visually appealing layout.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer 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`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: generationCount > 1 ? 3000 : 2000,
+        temperature: 0.8
+      })
+    });
+    const result = await response.json();
+    setAiGeneratedContent(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
+    setShowPreviewModal(true);
+    setIsLoading(false);
   };
 
   const handleCreateAnother = () => {
@@ -227,13 +254,66 @@ const ResumeForm = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file (JPEG, PNG, etc.)');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file size should be less than 5MB. Please choose a smaller image.');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, photo: reader.result }));
-        saveOfflineData('resumeForm', { ...formData, photo: reader.result });
+        // Create a canvas to compress the image
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set maximum dimensions
+          const maxWidth = 300;
+          const maxHeight = 300;
+          
+          let { width, height } = img;
+          
+          // Calculate new dimensions maintaining aspect ratio
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress image
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with compression
+          const compressedImage = canvas.toDataURL('image/jpeg', 0.8);
+          
+          setFormData(prev => ({ ...prev, photo: compressedImage }));
+          saveOfflineData('resumeForm', { ...formData, photo: compressedImage });
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, photo: '' }));
+    saveOfflineData('resumeForm', { ...formData, photo: '' });
   };
 
   const calculateATSScore = () => {
@@ -330,97 +410,80 @@ const ResumeForm = () => {
 
   const feedback = getATSFeedback();
 
-  const handleTemplatePreview = (template) => {
-    setPreviewTemplate(template);
-    setShowTemplateModal(true);
-  };
-
-  const handleTemplateSelect = (templateId) => {
-    setSelectedTemplate(templateId);
-    setShowTemplateModal(false);
-  };
-
-  const handleExperienceChange = (index, e) => {
-    const newExperience = [...formData.experience];
-    newExperience[index][e.target.name] = e.target.value;
-    setFormData({ ...formData, experience: newExperience });
-  };
-
-  const addExperienceField = () => {
-    setFormData({
-      ...formData,
-      experience: [
-        ...formData.experience,
-        { jobTitle: '', company: '', dates: '', description: '' }
-      ]
-    });
-  };
-
-  const removeExperienceField = (index) => {
-    const newExperience = [...formData.experience];
-    newExperience.splice(index, 1);
-    setFormData({ ...formData, experience: newExperience });
-  };
-
-  const handleLanguageChange = (index, e) => {
-    const newLanguages = [...formData.languages];
-    newLanguages[index][e.target.name] = e.target.value;
-    setFormData({ ...formData, languages: newLanguages });
-  };
-
-  const addLanguageField = () => {
-    setFormData({
-      ...formData,
-      languages: [
-        ...formData.languages,
-        { name: '', level: 3 }
-      ]
-    });
-  };
-
-  const removeLanguageField = (index) => {
-    const newLanguages = [...formData.languages];
-    newLanguages.splice(index, 1);
-    setFormData({ ...formData, languages: newLanguages });
-  };
-
   const handleCloseModal = () => {
     setShowPreviewModal(false);
     setGeneratedResumeData(null);
   };
 
+  const handleAISuggest = async (field, index = null) => {
+    setAiCommandField(field);
+    setAiCommandIndex(index);
+    setShowAICommandPortal(true);
+  };
+
+  const handleAICommandGenerate = async (command, mode) => {
+    setShowAICommandPortal(false);
+    setAiLoading(prev => ({ ...prev, [aiCommandField + (aiCommandIndex !== null ? '_' + aiCommandIndex : '')]: true }));
+    
+    let prompt;
+    const currentContent = aiCommandIndex !== null 
+      ? formData.experience[aiCommandIndex]?.description || ''
+      : formData[aiCommandField] || '';
+    
+    if (mode === 'write') {
+      // Writing new content
+      prompt = `${command}\n\nContext: ${JSON.stringify(formData)}\n\nGenerate professional content for the ${aiCommandField} field.`;
+    } else {
+      // Improving existing content
+      prompt = `${command}\n\nCurrent content: ${currentContent}\n\nContext: ${JSON.stringify(formData)}\n\nImprove and enhance the existing content.`;
+    }
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer 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`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 300,
+          temperature: 0.7
+        })
+      });
+      const result = await response.json();
+      const suggestion = result.choices?.[0]?.message?.content || '';
+      
+      if (aiCommandIndex !== null) {
+        const newExperience = [...formData.experience];
+        newExperience[aiCommandIndex].description = suggestion;
+        setFormData({ ...formData, experience: newExperience });
+      } else {
+        setFormData(prev => ({ ...prev, [aiCommandField]: suggestion }));
+      }
+    } catch (e) {
+      alert('AI suggestion failed. Please try again.');
+    }
+    
+    setAiLoading(prev => ({ ...prev, [aiCommandField + (aiCommandIndex !== null ? '_' + aiCommandIndex : '')]: false }));
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(aiGeneratedContent);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Main Grid */}
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Form Fields Section (Left) */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 border-b pb-4">Create Your Resume</h2>
-              
-              {/* Template Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 my-4">Select Template</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {resumeTemplates.map((template) => (
-                    <div 
-                      key={template.id} 
-                      onClick={() => handleTemplatePreview(template)} 
-                      className={`cursor-pointer border-2 ${selectedTemplate === template.id ? 'border-blue-500' : 'border-gray-200'} rounded-lg p-2 hover:border-blue-400 transition-all relative group bg-white shadow-sm`}
-                    >
-                      <img src={`/images/templates/${template.id}.png`} alt={`${template.name} resume template preview`} className="w-full h-auto rounded-md" onError={(e) => e.target.src = '/images/templates/placeholder.png'} />
-                      <p className="text-center text-sm mt-2 font-semibold text-gray-700">{template.name}</p>
-                      
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-all duration-300 rounded-md">
-                        <span className="text-white font-bold text-lg opacity-0 group-hover:opacity-100 transform group-hover:scale-110 transition-all duration-300">
-                          Preview
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex items-center space-x-2 mb-4">
+                <FileText className="h-6 w-6 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900">ATS-Friendly Resume</h2>
               </div>
             </div>
 
@@ -437,6 +500,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Enter your full name"
+                    spellCheck={true}
                   />
                 </div>
 
@@ -450,6 +514,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="your.email@example.com"
+                    spellCheck={true}
                   />
                 </div>
 
@@ -463,6 +528,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="+1 (555) 123-4567"
+                    spellCheck={true}
                   />
                 </div>
 
@@ -476,6 +542,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="City, State"
+                    spellCheck={true}
                   />
                 </div>
 
@@ -488,6 +555,7 @@ const ResumeForm = () => {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="https://linkedin.com/in/yourprofile"
+                    spellCheck={true}
                   />
                 </div>
 
@@ -501,7 +569,59 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Software Developer"
+                    spellCheck={true}
                   />
+                </div>
+              </div>
+
+              {/* Profile Photo Upload */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Profile Photo (Optional)</h3>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  {formData.photo ? (
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <img 
+                          src={formData.photo} 
+                          alt="Profile" 
+                          className="w-20 h-20 rounded-full object-cover border-2 border-blue-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Photo uploaded successfully!</p>
+                        <p className="text-xs text-gray-500">The AI will incorporate this into your resume design.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-4">
+                      <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center bg-gray-50">
+                        <User className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <div>
+                        <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                          Upload Photo
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="text-xs text-gray-500 mt-1">JPEG, PNG up to 5MB. Will be automatically resized.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -554,7 +674,33 @@ const ResumeForm = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Technical Skills *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    Technical Skills
+                    <AuthAwareContent
+                      showUpgradePrompt={false}
+                      fallback={
+                        <button
+                          type="button"
+                          className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                          disabled
+                          title="Sign in to use AI suggestions"
+                        >
+                          <Lock className="h-4 w-4" />
+                          AI Suggest
+                        </button>
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+                        onClick={() => handleAISuggest('skills')}
+                        disabled={aiLoading.skills}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {aiLoading.skills ? 'Generating...' : 'AI Suggest'}
+                      </button>
+                    </AuthAwareContent>
+                  </label>
                   <textarea
                     name="skills"
                     value={formData.skills}
@@ -563,6 +709,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="JavaScript, React, Node.js, Python, SQL, AWS, Git, Docker..."
+                    spellCheck={true}
                   />
                   <p className="text-xs text-gray-500 mt-1">Separate skills with commas. Include both technical and soft skills.</p>
                 </div>
@@ -575,14 +722,15 @@ const ResumeForm = () => {
                         type="text"
                         name="name"
                         value={lang.name}
-                        onChange={(e) => handleLanguageChange(index, e)}
+                        onChange={(e) => handleChange(e)}
                         placeholder="Language"
                         className="w-full sm:w-auto flex-grow px-4 py-3 border border-gray-300 rounded-lg"
+                        spellCheck={true}
                       />
                       <select
                         name="level"
                         value={lang.level}
-                        onChange={(e) => handleLanguageChange(index, e)}
+                        onChange={(e) => handleChange(e)}
                         className="px-4 py-3 border border-gray-300 rounded-lg"
                       >
                         <option value="1">1</option>
@@ -594,7 +742,11 @@ const ResumeForm = () => {
                       {formData.languages.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => removeLanguageField(index)}
+                          onClick={(e) => {
+                            const newLanguages = [...formData.languages];
+                            newLanguages.splice(index, 1);
+                            setFormData({ ...formData, languages: newLanguages });
+                          }}
                           className="text-red-500 p-2"
                         >
                           Remove
@@ -604,7 +756,15 @@ const ResumeForm = () => {
                   ))}
                   <button
                     type="button"
-                    onClick={addLanguageField}
+                    onClick={(e) => {
+                      setFormData({
+                        ...formData,
+                        languages: [
+                          ...formData.languages,
+                          { name: '', level: 3 }
+                        ]
+                      });
+                    }}
                     className="w-full mt-2 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-semibold hover:bg-blue-200 transition-colors"
                   >
                     Add Language
@@ -620,6 +780,7 @@ const ResumeForm = () => {
                     rows={2}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="AWS Certified Solutions Architect, PMP, Google Analytics Certification..."
+                    spellCheck={true}
                   />
                 </div>
               </div>
@@ -641,6 +802,7 @@ const ResumeForm = () => {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Bachelor's in Computer Science, University Name, 2020-2024, GPA: 3.8"
+                    spellCheck={true}
                   />
                 </div>
               </div>
@@ -661,9 +823,14 @@ const ResumeForm = () => {
                           type="text"
                           name="jobTitle"
                           value={exp.jobTitle}
-                          onChange={(e) => handleExperienceChange(index, e)}
+                          onChange={(e) => {
+                            const newExperience = [...formData.experience];
+                            newExperience[index][e.target.name] = e.target.value;
+                            setFormData({ ...formData, experience: newExperience });
+                          }}
                           placeholder="Job Title"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          spellCheck={true}
                         />
                       </div>
                       <div>
@@ -672,9 +839,14 @@ const ResumeForm = () => {
                           type="text"
                           name="company"
                           value={exp.company}
-                          onChange={(e) => handleExperienceChange(index, e)}
+                          onChange={(e) => {
+                            const newExperience = [...formData.experience];
+                            newExperience[index][e.target.name] = e.target.value;
+                            setFormData({ ...formData, experience: newExperience });
+                          }}
                           placeholder="Company"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                          spellCheck={true}
                         />
                       </div>
                     </div>
@@ -684,9 +856,14 @@ const ResumeForm = () => {
                         type="text"
                         name="dates"
                         value={exp.dates}
-                        onChange={(e) => handleExperienceChange(index, e)}
+                        onChange={(e) => {
+                          const newExperience = [...formData.experience];
+                          newExperience[index][e.target.name] = e.target.value;
+                          setFormData({ ...formData, experience: newExperience });
+                        }}
                         placeholder="Dates (e.g., Jan 2020 - Dec 2022)"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                        spellCheck={true}
                       />
                     </div>
                     <div>
@@ -694,18 +871,59 @@ const ResumeForm = () => {
                       <textarea
                         name="description"
                         value={exp.description}
-                        onChange={(e) => handleExperienceChange(index, e)}
+                        onChange={(e) => {
+                          const newExperience = [...formData.experience];
+                          newExperience[index][e.target.name] = e.target.value;
+                          setFormData({ ...formData, experience: newExperience });
+                        }}
                         rows={3}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                         placeholder="Describe your responsibilities and achievements..."
+                        spellCheck={true}
                       />
                     </div>
                     {formData.experience.length > 1 && (
-                      <button type="button" onClick={() => removeExperienceField(index)} className="text-red-500 font-semibold">Remove</button>
+                      <button type="button" onClick={(e) => {
+                        const newExperience = [...formData.experience];
+                        newExperience.splice(index, 1);
+                        setFormData({ ...formData, experience: newExperience });
+                      }} className="text-red-500 font-semibold">Remove</button>
                     )}
+                    <AuthAwareContent
+                      showUpgradePrompt={false}
+                      fallback={
+                        <button
+                          type="button"
+                          className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                          disabled
+                          title="Sign in to use AI suggestions"
+                        >
+                          <Lock className="h-4 w-4" />
+                          AI Suggest
+                        </button>
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+                        onClick={() => handleAISuggest('description', index)}
+                        disabled={aiLoading['description_' + index]}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {aiLoading['description_' + index] ? 'Generating...' : 'AI Suggest'}
+                      </button>
+                    </AuthAwareContent>
                   </div>
                 ))}
-                <button type="button" onClick={addExperienceField} className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition-colors">Add Experience</button>
+                <button type="button" onClick={(e) => {
+                  setFormData({
+                    ...formData,
+                    experience: [
+                      ...formData.experience,
+                      { jobTitle: '', company: '', dates: '', description: '' }
+                    ]
+                  });
+                }} className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition-colors">Add Experience</button>
               </div>
 
               {/* Additional Sections */}
@@ -718,6 +936,7 @@ const ResumeForm = () => {
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                   placeholder="Data Handling BOOTCAMP, Center for Creative Leadership..."
+                  spellCheck={true}
                 />
               </div>
               
@@ -731,8 +950,172 @@ const ResumeForm = () => {
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg"
                     placeholder="Creative Problem Solving, Strong Leadership, etc."
+                    spellCheck={true}
                   />
                 </div>
+              </div>
+
+              {/* Summary Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  Professional Summary
+                  <AuthAwareContent
+                    showUpgradePrompt={false}
+                    fallback={
+                      <button
+                        type="button"
+                        className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                        disabled
+                        title="Sign in to use AI suggestions"
+                      >
+                        <Lock className="h-4 w-4" />
+                        AI Suggest
+                      </button>
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+                      onClick={() => handleAISuggest('summary')}
+                      disabled={aiLoading.summary}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {aiLoading.summary ? 'Generating...' : 'AI Suggest'}
+                    </button>
+                  </AuthAwareContent>
+                </label>
+                <textarea
+                  name="summary"
+                  value={formData.summary}
+                  onChange={handleChange}
+                  rows={3}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Write a brief summary about yourself..."
+                  spellCheck={true}
+                />
+              </div>
+
+              {/* Achievements Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  Achievements
+                  <AuthAwareContent
+                    showUpgradePrompt={false}
+                    fallback={
+                      <button
+                        type="button"
+                        className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                        disabled
+                        title="Sign in to use AI suggestions"
+                      >
+                        <Lock className="h-4 w-4" />
+                        AI Suggest
+                      </button>
+                    }
+                  >
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+                      onClick={() => handleAISuggest('achievements')}
+                      disabled={aiLoading.achievements}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {aiLoading.achievements ? 'Generating...' : 'AI Suggest'}
+                    </button>
+                  </AuthAwareContent>
+                </label>
+                <textarea
+                  name="achievements"
+                  value={formData.achievements}
+                  onChange={handleChange}
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="List your key achievements..."
+                  spellCheck={true}
+                />
+              </div>
+
+              {/* Design Preferences */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-lg font-semibold text-gray-900">Design Preferences</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Design Style</label>
+                    <select
+                      value={designPreference}
+                      onChange={(e) => setDesignPreference(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value="auto">Auto (AI chooses best)</option>
+                      <option value="modern">Modern & Clean</option>
+                      <option value="professional">Professional & Traditional</option>
+                      <option value="creative">Creative & Colorful</option>
+                      <option value="minimalist">Minimalist</option>
+                      <option value="tech">Tech-focused</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Generate Multiple Designs</label>
+                    <select
+                      value={generationCount}
+                      onChange={(e) => setGenerationCount(parseInt(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    >
+                      <option value={1}>1 Design</option>
+                      <option value={2}>2 Designs</option>
+                      <option value={3}>3 Designs</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-blue-800 mb-1">Smart Design Features</h4>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• AI adapts layout based on your content and industry</li>
+                        <li>• Professional color schemes that match your field</li>
+                        <li>• Responsive design for all devices</li>
+                        <li>• ATS-friendly formatting with modern styling</li>
+                        {formData.photo && <li>• Your photo will be professionally integrated</li>}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Editor Option */}
+                <AuthAwareContent
+                  showUpgradePrompt={true}
+                  upgradeMessage="Sign in to access the custom editor and create your perfect design from scratch"
+                  upgradeButtonText="Sign In to Access"
+                >
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-2">
+                      <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
+                        <p className="text-sm text-purple-700 mb-3">
+                          Use our custom editor to drag & drop elements, edit code, and create your perfect design from scratch.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowCustomEditor(true)}
+                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                        >
+                          <Code className="h-4 w-4" />
+                          <span>Open Custom Editor</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </AuthAwareContent>
               </div>
 
               <button
@@ -774,7 +1157,7 @@ const ResumeForm = () => {
 
               {/* ATS Optimization Tips Card */}
               <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">ATS Optimization Tips</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Lightbulb className="h-5 w-5 mr-2 text-yellow-500"/> ATS Optimization Tips</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <h4 className="font-semibold text-green-600 flex items-center"><CheckCircle className="h-4 w-4 mr-2"/>What Works Well</h4>
@@ -799,105 +1182,51 @@ const ResumeForm = () => {
             </div>
           </div>
         </div>
-      </form>
+      </div>
 
       <Modal 
         isOpen={showPreviewModal} 
         onClose={handleCloseModal} 
         title="Your Generated Resume"
       >
-        {generatedResumeData && <ResumePreview content={generatedResumeData} />}
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={handleCopy}
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm mr-2"
+          >Copy</button>
+        </div>
+        <div ref={previewRef} dangerouslySetInnerHTML={{ __html: aiGeneratedContent }} className="bg-white rounded-xl shadow-lg p-4" />
+        {aiLoading.ai && <div className="text-center py-4">Generating with AI...</div>}
       </Modal>
 
-      {/* Template Preview Modal */}
-      {showTemplateModal && previewTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                  <h3 className="text-2xl font-bold text-gray-800">{previewTemplate.name}</h3>
-                  <button onClick={() => setShowTemplateModal(false)} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-              <div className="bg-gray-100 p-2 rounded-lg">
-                  <img src={`/images/templates/${previewTemplate.id}.png`} alt={`${previewTemplate.name} resume template larger preview`} className="w-full h-auto rounded-md shadow-md bg-white" onError={(e) => e.target.src = '/images/templates/placeholder.png'}/>
-              </div>
-              <div className="flex flex-col justify-center space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-700">Description</h4>
-                  <p className="text-gray-600 text-sm">{previewTemplate.description}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-700">Best for</h4>
-                  <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
-                    {previewTemplate.id === 'modern-sidebar' && (
-                      <>
-                        <li>• Technology and startup companies</li>
-                        <li>• Marketing and creative roles</li>
-                        <li>• Recent graduates</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'creative-timeline' && (
-                      <>
-                        <li>• Design and creative roles</li>
-                        <li>• Portfolio showcases</li>
-                        <li>• Freelance work</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'professional-accent' && (
-                      <>
-                        <li>• Marketing and creative roles</li>
-                        <li>• Recent graduates</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'professional-modern' && (
-                      <>
-                        <li>• Project Managers</li>
-                        <li>• IT Professionals</li>
-                        <li>• Consultants</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'executive-dark' && (
-                      <>
-                        <li>• Executives (CEO, CTO, etc.)</li>
-                        <li>• Senior Management</li>
-                        <li>• Human Resources</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'minimal' && (
-                      <>
-                        <li>• Maximum ATS compatibility</li>
-                        <li>• Career changers</li>
-                        <li>• Entry-level positions</li>
-                      </>
-                    )}
-                    {previewTemplate.id === 'tech' && (
-                      <>
-                        <li>• Software developers</li>
-                        <li>• IT professionals</li>
-                        <li>• Technical roles</li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-                {previewTemplate.atsFriendly && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-semibold bg-green-100 text-green-700 px-2 py-1 rounded-full">ATS Friendly</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="p-4 sm:p-6 bg-gray-50 rounded-b-xl flex flex-col sm:flex-row justify-end items-center gap-3">
-              <button onClick={() => setShowTemplateModal(false)} className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
-                Cancel
-              </button>
-              <button onClick={() => handleTemplateSelect(previewTemplate.id)} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">
-                Select this Template
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Custom Editor */}
+      {showCustomEditor && (
+        <CustomEditor
+          formData={formData}
+          onClose={() => setShowCustomEditor(false)}
+          documentType="resume"
+        />
+      )}
+
+      {/* AI Command Portal */}
+      {showAICommandPortal && (
+        <AICommandPortal
+          isOpen={showAICommandPortal}
+          onClose={() => setShowAICommandPortal(false)}
+          fieldName={aiCommandField}
+          currentContent={aiCommandIndex !== null 
+            ? formData.experience[aiCommandIndex]?.description || ''
+            : formData[aiCommandField] || ''
+          }
+          onGenerate={handleAICommandGenerate}
+          isLoading={aiLoading[aiCommandField + (aiCommandIndex !== null ? '_' + aiCommandIndex : '')]}
+          context={{
+            'Job Title': formData.jobTitle || 'Not specified',
+            'Industry': formData.targetIndustry || 'Not specified',
+            'Experience Level': formData.experienceLevel || 'Not specified',
+            'Current Skills': formData.skills ? formData.skills.substring(0, 100) + '...' : 'Not specified'
+          }}
+        />
       )}
     </div>
   );

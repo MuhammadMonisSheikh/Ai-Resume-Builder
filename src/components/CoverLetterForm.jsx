@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Loader2, CheckCircle, X, Target, Lightbulb } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Loader2, CheckCircle, X, Target, Lightbulb, Sparkles, Code, Lock } from 'lucide-react';
 import CoverLetterPreview from './CoverLetterPreview';
 import Modal from './Modal';
-
-const coverLetterTemplates = [
-    { id: 'modern', name: 'Modern', description: 'A clean, modern design with a clear header.' },
-    { id: 'classic', name: 'Classic', description: 'A timeless, traditional format for formal applications.' },
-    { id: 'professional', name: 'Professional', description: 'A bold design with a color header to stand out.' },
-    { id: 'minimalist', name: 'Minimalist', description: 'A simple, elegant design with plenty of white space.' },
-];
+import { usePWA } from '../hooks/usePWA';
+import { useAuth } from '../contexts/AuthContext';
+import CustomEditor from './CustomEditor';
+import AICommandPortal from './AICommandPortal';
+import AuthAwareContent from './auth/AuthAwareContent';
 
 const CoverLetterForm = () => {
+  const { saveOfflineData, getOfflineData } = usePWA();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,10 +22,13 @@ const CoverLetterForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCoverLetter, setGeneratedCoverLetter] = useState('');
   const [keywordAnalysis, setKeywordAnalysis] = useState({ matches: [], missing: [] });
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [previewTemplate, setPreviewTemplate] = useState(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiGeneratedContent, setAiGeneratedContent] = useState('');
+  const [showCustomEditor, setShowCustomEditor] = useState(false);
+  const [showAICommandPortal, setShowAICommandPortal] = useState(false);
+  const [aiCommandField, setAiCommandField] = useState('');
+  const previewRef = useRef(null);
 
   const generateCoverLetterHTML = (data, templateId) => {
     const { name, email, jobTitle, companyName, experience } = data;
@@ -156,20 +159,84 @@ const CoverLetterForm = () => {
   }, [formData.jobDescription, formData.experience]);
 
   useEffect(() => {
-    const content = generateCoverLetterHTML(formData, selectedTemplate);
+    const content = generateCoverLetterHTML(formData, 'modern');
     setGeneratedCoverLetter(content);
-  }, [formData, selectedTemplate]);
+  }, [formData]);
+
+  // Load saved form data on mount
+  useEffect(() => {
+    const saved = getOfflineData('coverLetterForm');
+    if (saved) setFormData(saved);
+  }, []);
+
+  // Handle auth modal opening from AuthAwareContent
+  useEffect(() => {
+    const handleOpenAuthModal = () => {
+      // This will be handled by the Header component
+      window.dispatchEvent(new CustomEvent('openAuthModalFromForm'));
+    };
+
+    window.addEventListener('openAuthModal', handleOpenAuthModal);
+    return () => {
+      window.removeEventListener('openAuthModal', handleOpenAuthModal);
+    };
+  }, []);
+
+  // Auto-save on change
+  useEffect(() => {
+    saveOfflineData('coverLetterForm', formData);
+  }, [formData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setAiGeneratedContent('');
+    
+    // Create a comprehensive prompt for dynamic cover letter design generation
+    const industry = formData.companyName ? 'Target company: ' + formData.companyName : 'General application';
+    const jobType = formData.jobTitle ? 'Position: ' + formData.jobTitle : 'Professional position';
+    const hasExperience = formData.experience ? 'User has provided detailed experience and skills.' : 'User needs to add more experience details.';
+    
+    const prompt = `Generate a professional, modern cover letter in HTML with dynamic design that adapts to the content and industry.
 
-    // Simulate API call
-    setTimeout(() => {
-        setIsLoading(false);
-        setGeneratedCoverLetter(generateCoverLetterHTML(formData, selectedTemplate));
-        setShowPreviewModal(true);
-    }, 1000);
+Requirements:
+- ${jobType}
+- ${industry}
+- ${hasExperience}
+
+Design Guidelines:
+1. Choose colors and styling that match the industry (tech=blue/purple, healthcare=green/blue, finance=navy/gold, etc.)
+2. Create a modern, clean layout with professional typography
+3. Use appropriate spacing and visual hierarchy
+4. Include responsive design for mobile devices
+5. Make the cover letter engaging and visually appealing
+6. Use professional color schemes and subtle gradients
+7. Include proper letter formatting with date, address, and signature sections
+8. Highlight key skills and experience prominently
+9. Use modern CSS with clean, readable fonts
+10. Ensure the design complements the content length and type
+
+User Data: ${JSON.stringify(formData)}
+
+Generate a complete HTML cover letter with embedded CSS that looks professional and modern. The design should be visually appealing while maintaining readability and professionalism.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer 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`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 1500,
+        temperature: 0.8
+      })
+    });
+    const result = await response.json();
+    setAiGeneratedContent(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
+    setShowPreviewModal(true);
+    setIsLoading(false);
   };
 
   const handleChange = (e) => {
@@ -179,221 +246,317 @@ const CoverLetterForm = () => {
     }));
   };
 
-  const handleTemplatePreview = (template) => {
-    setPreviewTemplate(template);
-    setShowTemplateModal(true);
-  };
-
-  const handleTemplateSelect = (templateId) => {
-    setSelectedTemplate(templateId);
-    setShowTemplateModal(false);
-  };
-
   const handleCloseModal = () => {
     setShowPreviewModal(false);
     setGeneratedCoverLetter('');
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(aiGeneratedContent);
+  };
+
+  const handleAISuggest = async () => {
+    setAiCommandField('experience');
+    setShowAICommandPortal(true);
+  };
+
+  const handleAICommandGenerate = async (command, mode) => {
+    setShowAICommandPortal(false);
+    setAiLoading(true);
+    
+    let prompt;
+    const currentContent = formData.experience || '';
+    
+    if (mode === 'write') {
+      // Writing new content
+      prompt = `${command}\n\nContext: ${JSON.stringify(formData)}\n\nGenerate professional content for the experience section of a cover letter.`;
+    } else {
+      // Improving existing content
+      prompt = `${command}\n\nCurrent content: ${currentContent}\n\nContext: ${JSON.stringify(formData)}\n\nImprove and enhance the existing content for a cover letter.`;
+    }
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer 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`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 300,
+          temperature: 0.7
+        })
+      });
+      const result = await response.json();
+      const suggestion = result.choices?.[0]?.message?.content || '';
+      setFormData(prev => ({ ...prev, experience: suggestion }));
+    } catch (e) {
+      alert('AI suggestion failed. Please try again.');
+    }
+    
+    setAiLoading(false);
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      
-      {/* Form Section */}
-      <div className="lg:col-span-2">
-        <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center space-x-2 mb-4">
-            <FileText className="h-6 w-6 text-green-600" />
-            <h2 className="text-2xl font-bold text-gray-900">ATS-Friendly Cover Letter</h2>
-          </div>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Form Section */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl shadow-lg">
+            <div className="flex items-center space-x-2 mb-4">
+              <FileText className="h-6 w-6 text-green-600" />
+              <h2 className="text-2xl font-bold text-gray-900">ATS-Friendly Cover Letter</h2>
+            </div>
 
-            {/* Template Selection */}
+            {/* Load button above the form */}
+            <button
+              type="button"
+              className="mb-4 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300"
+              onClick={() => {
+                const saved = getOfflineData('coverLetterForm');
+                if (saved) {
+                  setFormData(saved);
+                  alert('Loaded last saved cover letter!');
+                } else {
+                  alert('No saved cover letter found.');
+                }
+              }}
+            >
+              Load Last Saved
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  placeholder="Enter your full name"
+                  spellCheck={true}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  placeholder="your.email@example.com"
+                  spellCheck={true}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+                <input
+                  type="text"
+                  name="jobTitle"
+                  value={formData.jobTitle}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  placeholder="Software Developer"
+                  spellCheck={true}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                <input
+                  type="text"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  placeholder="Company Name"
+                  spellCheck={true}
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select a Template</label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {coverLetterTemplates.map((template) => (
-                  <div 
-                    key={template.id} 
-                    onClick={() => handleTemplatePreview(template)} 
-                    className={`cursor-pointer border-2 ${selectedTemplate === template.id ? 'border-green-500' : 'border-gray-200'} rounded-lg p-2 hover:border-green-400 transition-all relative group bg-gray-50`}
+              <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+              <textarea
+                name="jobDescription"
+                value={formData.jobDescription}
+                onChange={handleChange}
+                rows={5}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Paste the job description here for keyword analysis..."
+                spellCheck={true}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                Your Experience & Skills
+                <AuthAwareContent
+                  showUpgradePrompt={false}
+                  fallback={
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                      disabled
+                      title="Sign in to use AI suggestions"
+                    >
+                      <Lock className="h-4 w-4" />
+                      AI Suggest
+                    </button>
+                  }
+                >
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 flex items-center gap-1 text-xs"
+                    onClick={handleAISuggest}
+                    disabled={aiLoading}
                   >
-                    <img src={`/images/templates/cover-letter-${template.id}.png`} alt={template.name} className="w-full h-auto rounded-md bg-white shadow-sm" onError={(e) => e.target.src = '/images/templates/placeholder.png'}/>
-                    <p className="text-center text-xs mt-2 font-semibold text-gray-600">{template.name}</p>
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center transition-all duration-200 rounded-md">
-                      <span className="text-white font-bold opacity-0 group-hover:opacity-100">Preview</span>
-                    </div>
+                    <Sparkles className="h-4 w-4" />
+                    {aiLoading ? 'Generating...' : 'AI Suggest'}
+                  </button>
+                </AuthAwareContent>
+              </label>
+              <textarea
+                name="experience"
+                value={formData.experience}
+                onChange={handleChange}
+                rows={8}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Describe your relevant experience and skills, making sure to include keywords from the job description."
+                spellCheck={true}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Generating Cover Letter...</span>
+                </div>
+              ) : (
+                'Generate AI Cover Letter'
+              )}
+            </button>
+
+            {/* Custom Editor Option */}
+            <AuthAwareContent
+              showUpgradePrompt={true}
+              upgradeMessage="Sign in to access the custom editor and create your perfect cover letter from scratch"
+              upgradeButtonText="Sign In to Access"
+            >
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
+                    <p className="text-sm text-purple-700 mb-3">
+                      Use our custom editor to drag & drop elements, edit code, and create your perfect cover letter from scratch.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomEditor(true)}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                    >
+                      <Code className="h-4 w-4" />
+                      <span>Open Custom Editor</span>
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                placeholder="your.email@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
-              <input
-                type="text"
-                name="jobTitle"
-                value={formData.jobTitle}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                placeholder="Software Developer"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-              <input
-                type="text"
-                name="companyName"
-                value={formData.companyName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                placeholder="Company Name"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
-            <textarea
-              name="jobDescription"
-              value={formData.jobDescription}
-              onChange={handleChange}
-              rows={5}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              placeholder="Paste the job description here for keyword analysis..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Your Experience & Skills</label>
-            <textarea
-              name="experience"
-              value={formData.experience}
-              onChange={handleChange}
-              rows={8}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-              placeholder="Describe your relevant experience and skills, making sure to include keywords from the job description."
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors disabled:opacity-50"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Generating Cover Letter...</span>
-              </div>
-            ) : (
-              'Generate AI Cover Letter'
-            )}
-          </button>
-        </form>
-      </div>
-      
-      {/* Sidebar Section */}
-      <div className="lg:col-span-1 space-y-6">
-        <div className="sticky top-8">
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mt-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Lightbulb className="h-5 w-5 mr-2 text-yellow-500"/> ATS Optimization Tips</h3>
-                
-                {keywordAnalysis.matches.length > 0 && (
-                    <div className="mb-4">
-                        <h4 className="font-semibold text-green-600 flex items-center"><CheckCircle className="h-4 w-4 mr-2"/>Matched Keywords</h4>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                            {keywordAnalysis.matches.map(k => <span key={k} className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">{k}</span>)}
-                        </div>
-                    </div>
-                )}
-
-                {keywordAnalysis.missing.length > 0 && (
-                    <div>
-                        <h4 className="font-semibold text-red-600 flex items-center"><Target className="h-4 w-4 mr-2"/>Missing Keywords</h4>
-                        <p className="text-xs text-gray-500 mb-2">Try to include these in your text:</p>
-                        <div className="flex flex-wrap gap-1">
-                            {keywordAnalysis.missing.map(k => <span key={k} className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">{k}</span>)}
-                        </div>
-                    </div>
-                )}
-                
-                {(keywordAnalysis.matches.length === 0 && keywordAnalysis.missing.length === 0) && (
-                    <p className="text-sm text-gray-500">Start typing your experience to see keyword analysis.</p>
-                )}
-            </div>
-        </div>
-      </div>
-
-      {/* Template Preview Modal */}
-      {showTemplateModal && previewTemplate && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                  <h3 className="text-2xl font-bold text-gray-800">{previewTemplate.name}</h3>
-                  <button onClick={() => setShowTemplateModal(false)} className="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-              <div className="bg-gray-100 p-2 rounded-lg">
-                <img src={`/images/templates/cover-letter-${previewTemplate.id}.png`} alt={`${previewTemplate.name} Preview`} className="w-full h-auto rounded-md shadow-md bg-white" onError={(e) => e.target.src = '/images/templates/placeholder.png'}/>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-gray-700">Description</h4>
-                  <p className="text-gray-600 text-sm">{previewTemplate.description}</p>
                 </div>
               </div>
-            </div>
-            <div className="p-6 bg-gray-50 rounded-b-xl flex justify-end items-center gap-4">
-              <button onClick={() => setShowTemplateModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100">
-                Cancel
-              </button>
-              <button onClick={() => handleTemplateSelect(previewTemplate.id)} className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">
-                Select this Template
-              </button>
-            </div>
+            </AuthAwareContent>
+          </form>
+        </div>
+        
+        {/* Sidebar Section */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="sticky top-8">
+              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mt-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Lightbulb className="h-5 w-5 mr-2 text-yellow-500"/> ATS Optimization Tips</h3>
+                  
+                  {keywordAnalysis.matches.length > 0 && (
+                      <div className="mb-4">
+                          <h4 className="font-semibold text-green-600 flex items-center"><CheckCircle className="h-4 w-4 mr-2"/>Matched Keywords</h4>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                              {keywordAnalysis.matches.map(k => <span key={k} className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">{k}</span>)}
+                          </div>
+                      </div>
+                  )}
+
+                  {keywordAnalysis.missing.length > 0 && (
+                      <div>
+                          <h4 className="font-semibold text-red-600 flex items-center"><Target className="h-4 w-4 mr-2"/>Missing Keywords</h4>
+                          <p className="text-xs text-gray-500 mb-2">Try to include these in your text:</p>
+                          <div className="flex flex-wrap gap-1">
+                              {keywordAnalysis.missing.map(k => <span key={k} className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">{k}</span>)}
+                          </div>
+                      </div>
+                  )}
+                  
+                  {(keywordAnalysis.matches.length === 0 && keywordAnalysis.missing.length === 0) && (
+                      <p className="text-sm text-gray-500">Start typing your experience to see keyword analysis.</p>
+                  )}
+              </div>
           </div>
         </div>
-      )}
 
-      <Modal 
-        isOpen={showPreviewModal} 
-        onClose={handleCloseModal} 
-        title="Your Generated Cover Letter"
-      >
-        <CoverLetterPreview content={generatedCoverLetter} />
-      </Modal>
+        <Modal 
+          isOpen={showPreviewModal} 
+          onClose={handleCloseModal} 
+          title="Your Generated Cover Letter"
+        >
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={handleCopy}
+              className="px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm mr-2"
+            >Copy</button>
+          </div>
+          <div ref={previewRef} dangerouslySetInnerHTML={{ __html: aiGeneratedContent }} className="bg-white rounded-xl shadow-lg p-4" />
+          {aiLoading && <div className="text-center py-4">Generating with AI...</div>}
+        </Modal>
+
+        {/* Custom Editor */}
+        {showCustomEditor && (
+          <CustomEditor
+            formData={formData}
+            onClose={() => setShowCustomEditor(false)}
+            documentType="cover-letter"
+          />
+        )}
+
+        {/* AI Command Portal */}
+        {showAICommandPortal && (
+          <AICommandPortal
+            isOpen={showAICommandPortal}
+            onClose={() => setShowAICommandPortal(false)}
+            fieldName={aiCommandField}
+            currentContent={formData[aiCommandField] || ''}
+            onGenerate={handleAICommandGenerate}
+            isLoading={aiLoading}
+            context={{
+              'Job Title': formData.jobTitle || 'Not specified',
+              'Company': formData.companyName || 'Not specified',
+              'Job Description': formData.jobDescription ? formData.jobDescription.substring(0, 100) + '...' : 'Not specified'
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 };
