@@ -6,6 +6,9 @@ import Home from './pages/Home';
 import ResumeForFreshers from './pages/ResumeForFreshers';
 import ResumeForGulfJobs from './pages/ResumeForGulfJobs';
 import CoverLetterForTeachers from './pages/CoverLetterForTeachers';
+import SignUp from './pages/SignUp';
+import SignIn from './pages/SignIn';
+import ForgotPassword from './pages/ForgotPassword';
 import PWAInstall from './components/PWAInstall';
 import OfflineIndicator from './components/OfflineIndicator';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -25,6 +28,9 @@ function App() {
                 <Route path="/resume-for-freshers" element={<ResumeForFreshers />} />
                 <Route path="/resume-for-gulf-jobs" element={<ResumeForGulfJobs />} />
                 <Route path="/cover-letter-for-teachers" element={<CoverLetterForTeachers />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
               </Routes>
             </main>
             <Footer />

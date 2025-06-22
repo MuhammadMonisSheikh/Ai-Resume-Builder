@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ai-resume-pro-v6';
+const CACHE_NAME = 'ai-resume-pro-v7';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -32,6 +32,18 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - use a "Stale-While-Revalidate" strategy
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests for caching - completely ignore others
+  if (event.request.method !== 'GET') {
+    return; // Don't handle non-GET requests at all
+  }
+
+  // Skip Firebase and other API requests
+  if (event.request.url.includes('firebase') || 
+      event.request.url.includes('googleapis') ||
+      event.request.url.includes('/api/')) {
+    return; // Let these pass through without caching
+  }
+
   event.respondWith(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
@@ -41,6 +53,9 @@ self.addEventListener('fetch', (event) => {
             cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
+        }).catch((error) => {
+          console.log('Fetch failed:', error);
+          return cachedResponse; // Return cached response if fetch fails
         });
 
         // Return the cached response immediately, then update the cache in the background.

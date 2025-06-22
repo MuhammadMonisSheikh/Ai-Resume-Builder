@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FileText, Menu, X, Settings, Download, User, LogOut, ChevronDown } from 'lucide-react';
 import PWASettings from './PWASettings';
-import AuthModal from './auth/AuthModal';
 import UserProfile from './auth/UserProfile';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
   const userMenuRef = useRef(null);
 
   // Close user menu when clicking outside
@@ -30,18 +29,6 @@ const Header = () => {
     };
   }, []);
 
-  // Handle auth modal opening from other components
-  useEffect(() => {
-    const handleOpenAuthModalFromForm = () => {
-      setIsAuthModalOpen(true);
-    };
-
-    window.addEventListener('openAuthModalFromForm', handleOpenAuthModalFromForm);
-    return () => {
-      window.removeEventListener('openAuthModalFromForm', handleOpenAuthModalFromForm);
-    };
-  }, []);
-
   const baseLinkClass = "transition-colors hover:text-blue-600";
   const activeLinkClass = "text-blue-600 font-semibold";
   const inactiveLinkClass = "text-gray-600 font-medium";
@@ -53,34 +40,11 @@ const Header = () => {
     setIsUserMenuOpen(false);
   };
 
-  const handleAuthClick = () => {
-    setIsAuthModalOpen(true);
-    setIsMenuOpen(false);
-  };
-
   const handleProfileClick = () => {
     setIsProfileOpen(true);
     setIsUserMenuOpen(false);
+    setIsMenuOpen(false);
   };
-
-  async function generateAIResume(data) {
-    const prompt = `Generate a professional resume layout and content for the following job title and details:\nJob Title: ${data.jobTitle}\nDetails: ${JSON.stringify(data)}`;
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1200,
-        temperature: 0.7
-      })
-    });
-    const result = await response.json();
-    return result.choices[0].message.content;
-  }
 
   return (
     <header className="bg-gray-800 shadow-md sticky top-0 z-40">
@@ -116,7 +80,7 @@ const Header = () => {
           </nav>
 
           {/* Authentication Section */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             {isAuthenticated ? (
               <div className="relative">
                 <button
@@ -138,7 +102,7 @@ const Header = () => {
                       className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
                     >
                       <User className="h-4 w-4" />
-                      <span>Profile</span>
+                      <span>My Profile</span>
                     </button>
                     <button
                       onClick={handleLogout}
@@ -151,13 +115,21 @@ const Header = () => {
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleAuthClick}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <User className="h-4 w-4" />
-                <span>Sign In</span>
-              </button>
+              <>
+                <Link
+                  to="/signin"
+                  className="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-700"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Sign Up</span>
+                </Link>
+              </>
             )}
           </div>
 
@@ -190,25 +162,40 @@ const Header = () => {
             </button>
           </div>
           <nav className="flex-grow flex flex-col justify-center items-center space-y-8">
-            <NavLink to="/" className={({isActive}) => `${getLinkClassName({isActive})} text-2xl text-gray-300 hover:text-white`} onClick={() => setIsMenuOpen(false)}>
+            <NavLink
+              to="/"
+              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Home
             </NavLink>
-            <NavLink to="/resume-for-freshers" className={({isActive}) => `${getLinkClassName({isActive})} text-2xl text-gray-300 hover:text-white`} onClick={() => setIsMenuOpen(false)}>
-              For Freshers
+            <NavLink
+              to="/resume-for-freshers"
+              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Freshers
             </NavLink>
-            <NavLink to="/resume-for-gulf-jobs" className={({isActive}) => `${getLinkClassName({isActive})} text-2xl text-gray-300 hover:text-white`} onClick={() => setIsMenuOpen(false)}>
+            <NavLink
+              to="/resume-for-gulf-jobs"
+              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Gulf Jobs
             </NavLink>
-            <NavLink to="/cover-letter-for-teachers" className={({isActive}) => `${getLinkClassName({isActive})} text-2xl text-gray-300 hover:text-white`} onClick={() => setIsMenuOpen(false)}>
-              For Teachers
+            <NavLink
+              to="/cover-letter-for-teachers"
+              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Teachers
             </NavLink>
-            <div className="border-t border-gray-700 w-1/2 my-4"></div>
             <button
               onClick={() => {
-                setIsMenuOpen(false);
                 setIsSettingsOpen(true);
+                setIsMenuOpen(false);
               }}
-              className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2 text-xl"
+              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors flex items-center space-x-2"
             >
               <Settings className="h-6 w-6" />
               <span>Settings</span>
@@ -232,7 +219,7 @@ const Header = () => {
                   className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2 text-xl"
                 >
                   <User className="h-6 w-6" />
-                  <span>Profile</span>
+                  <span>My Profile</span>
                 </button>
                 <button
                   onClick={() => {
@@ -246,30 +233,32 @@ const Header = () => {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  handleAuthClick();
-                }}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xl"
-              >
-                <User className="h-6 w-6" />
-                <span>Sign In</span>
-              </button>
+              <div className="flex flex-col items-center space-y-4">
+                <Link
+                  to="/signin"
+                  className="text-gray-300 hover:text-white transition-colors text-xl"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/signup"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xl"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-6 w-6" />
+                  <span>Sign Up</span>
+                </Link>
+              </div>
             )}
           </nav>
         </div>
       </div>
-      
+
       {/* PWA Settings Modal */}
-      <PWASettings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-      
-      {/* Authentication Modal */}
-      <AuthModal 
-        isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)} 
-        initialMode="login"
-      />
+      {isSettingsOpen && (
+        <PWASettings onClose={() => setIsSettingsOpen(false)} />
+      )}
       
       {/* User Profile Modal */}
       {isProfileOpen && (

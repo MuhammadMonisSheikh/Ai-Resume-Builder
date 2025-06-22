@@ -1,23 +1,25 @@
+// ResumeForm component - Auth system removed
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Briefcase, GraduationCap, Award, Loader2, Target, FileText, CheckCircle, Star, Lightbulb, TrendingUp, ChevronDown, Plus, X, Monitor, Smartphone, Sparkles, Code, Lock } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
-import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ResumePreview from './ResumePreview';
 import Modal from './Modal';
 import CustomEditor from './CustomEditor';
 import AICommandPortal from './AICommandPortal';
-import AuthAwareContent from './auth/AuthAwareContent';
+import { useAuth } from '../contexts/AuthContext';
 
 const ResumeForm = () => {
   const { saveOfflineData, getOfflineData, isOnline } = usePWA();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
+    name: user ? `${user.firstName} ${user.lastName}` : '',
+    email: user ? user.email : '',
+    phone: user ? user.phone : '',
+    location: user ? user.location : '',
     linkedin: '',
     jobTitle: '',
     targetIndustry: '',
@@ -73,19 +75,6 @@ const ResumeForm = () => {
       setFormData(savedData);
       calculateResumeLength();
     }
-  }, []);
-
-  // Handle auth modal opening from AuthAwareContent
-  useEffect(() => {
-    const handleOpenAuthModal = () => {
-      // This will be handled by the Header component
-      window.dispatchEvent(new CustomEvent('openAuthModalFromForm'));
-    };
-
-    window.addEventListener('openAuthModal', handleOpenAuthModal);
-    return () => {
-      window.removeEventListener('openAuthModal', handleOpenAuthModal);
-    };
   }, []);
 
   // ATS-friendly industries
@@ -676,30 +665,15 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     Technical Skills
-                    <AuthAwareContent
-                      showUpgradePrompt={false}
-                      fallback={
-                        <button
-                          type="button"
-                          className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                          disabled
-                          title="Sign in to use AI suggestions"
-                        >
-                          <Lock className="h-4 w-4" />
-                          AI Suggest
-                        </button>
-                      }
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                      disabled
+                      title="Sign in to use AI suggestions"
                     >
-                      <button
-                        type="button"
-                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
-                        onClick={() => handleAISuggest('skills')}
-                        disabled={aiLoading.skills}
-                      >
-                        <Sparkles className="h-4 w-4" />
-                        {aiLoading.skills ? 'Generating...' : 'AI Suggest'}
-                      </button>
-                    </AuthAwareContent>
+                      <Lock className="h-4 w-4" />
+                      AI Suggest
+                    </button>
                   </label>
                   <textarea
                     name="skills"
@@ -889,30 +863,15 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
                         setFormData({ ...formData, experience: newExperience });
                       }} className="text-red-500 font-semibold">Remove</button>
                     )}
-                    <AuthAwareContent
-                      showUpgradePrompt={false}
-                      fallback={
-                        <button
-                          type="button"
-                          className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                          disabled
-                          title="Sign in to use AI suggestions"
-                        >
-                          <Lock className="h-4 w-4" />
-                          AI Suggest
-                        </button>
-                      }
+                    <button
+                      type="button"
+                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+                      onClick={() => handleAISuggest('description', index)}
+                      disabled={aiLoading['description_' + index]}
                     >
-                      <button
-                        type="button"
-                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
-                        onClick={() => handleAISuggest('description', index)}
-                        disabled={aiLoading['description_' + index]}
-                      >
-                        <Sparkles className="h-4 w-4" />
-                        {aiLoading['description_' + index] ? 'Generating...' : 'AI Suggest'}
-                      </button>
-                    </AuthAwareContent>
+                      <Sparkles className="h-4 w-4" />
+                      {aiLoading['description_' + index] ? 'Generating...' : 'AI Suggest'}
+                    </button>
                   </div>
                 ))}
                 <button type="button" onClick={(e) => {
@@ -959,30 +918,15 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   Professional Summary
-                  <AuthAwareContent
-                    showUpgradePrompt={false}
-                    fallback={
-                      <button
-                        type="button"
-                        className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                        disabled
-                        title="Sign in to use AI suggestions"
-                      >
-                        <Lock className="h-4 w-4" />
-                        AI Suggest
-                      </button>
-                    }
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                    disabled
+                    title="Sign in to use AI suggestions"
                   >
-                    <button
-                      type="button"
-                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
-                      onClick={() => handleAISuggest('summary')}
-                      disabled={aiLoading.summary}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {aiLoading.summary ? 'Generating...' : 'AI Suggest'}
-                    </button>
-                  </AuthAwareContent>
+                    <Lock className="h-4 w-4" />
+                    AI Suggest
+                  </button>
                 </label>
                 <textarea
                   name="summary"
@@ -1000,30 +944,15 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                   Achievements
-                  <AuthAwareContent
-                    showUpgradePrompt={false}
-                    fallback={
-                      <button
-                        type="button"
-                        className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                        disabled
-                        title="Sign in to use AI suggestions"
-                      >
-                        <Lock className="h-4 w-4" />
-                        AI Suggest
-                      </button>
-                    }
+                  <button
+                    type="button"
+                    className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                    disabled
+                    title="Sign in to use AI suggestions"
                   >
-                    <button
-                      type="button"
-                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
-                      onClick={() => handleAISuggest('achievements')}
-                      disabled={aiLoading.achievements}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {aiLoading.achievements ? 'Generating...' : 'AI Suggest'}
-                    </button>
-                  </AuthAwareContent>
+                    <Lock className="h-4 w-4" />
+                    AI Suggest
+                  </button>
                 </label>
                 <textarea
                   name="achievements"
@@ -1091,31 +1020,25 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
                 </div>
 
                 {/* Custom Editor Option */}
-                <AuthAwareContent
-                  showUpgradePrompt={true}
-                  upgradeMessage="Sign in to access the custom editor and create your perfect design from scratch"
-                  upgradeButtonText="Sign In to Access"
-                >
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-2">
-                      <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
-                        <p className="text-sm text-purple-700 mb-3">
-                          Use our custom editor to drag & drop elements, edit code, and create your perfect design from scratch.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setShowCustomEditor(true)}
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                        >
-                          <Code className="h-4 w-4" />
-                          <span>Open Custom Editor</span>
-                        </button>
-                      </div>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
+                      <p className="text-sm text-purple-700 mb-3">
+                        Use our custom editor to drag & drop elements, edit code, and create your perfect design from scratch.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomEditor(true)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                      >
+                        <Code className="h-4 w-4" />
+                        <span>Open Custom Editor</span>
+                      </button>
                     </div>
                   </div>
-                </AuthAwareContent>
+                </div>
               </div>
 
               <button

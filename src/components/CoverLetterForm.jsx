@@ -3,17 +3,16 @@ import { FileText, Loader2, CheckCircle, X, Target, Lightbulb, Sparkles, Code, L
 import CoverLetterPreview from './CoverLetterPreview';
 import Modal from './Modal';
 import { usePWA } from '../hooks/usePWA';
-import { useAuth } from '../contexts/AuthContext';
 import CustomEditor from './CustomEditor';
 import AICommandPortal from './AICommandPortal';
-import AuthAwareContent from './auth/AuthAwareContent';
+import { useAuth } from '../contexts/AuthContext';
 
 const CoverLetterForm = () => {
   const { saveOfflineData, getOfflineData } = usePWA();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: user ? `${user.firstName} ${user.lastName}` : '',
+    email: user ? user.email : '',
     jobTitle: '',
     companyName: '',
     jobDescription: '',
@@ -167,19 +166,6 @@ const CoverLetterForm = () => {
   useEffect(() => {
     const saved = getOfflineData('coverLetterForm');
     if (saved) setFormData(saved);
-  }, []);
-
-  // Handle auth modal opening from AuthAwareContent
-  useEffect(() => {
-    const handleOpenAuthModal = () => {
-      // This will be handled by the Header component
-      window.dispatchEvent(new CustomEvent('openAuthModalFromForm'));
-    };
-
-    window.addEventListener('openAuthModal', handleOpenAuthModal);
-    return () => {
-      window.removeEventListener('openAuthModal', handleOpenAuthModal);
-    };
   }, []);
 
   // Auto-save on change
@@ -403,30 +389,15 @@ Generate a complete HTML cover letter with embedded CSS that looks professional 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 Your Experience & Skills
-                <AuthAwareContent
-                  showUpgradePrompt={false}
-                  fallback={
-                    <button
-                      type="button"
-                      className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                      disabled
-                      title="Sign in to use AI suggestions"
-                    >
-                      <Lock className="h-4 w-4" />
-                      AI Suggest
-                    </button>
-                  }
+                <button
+                  type="button"
+                  className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+                  disabled
+                  title="Sign in to use AI suggestions"
                 >
-                  <button
-                    type="button"
-                    className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 flex items-center gap-1 text-xs"
-                    onClick={handleAISuggest}
-                    disabled={aiLoading}
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    {aiLoading ? 'Generating...' : 'AI Suggest'}
-                  </button>
-                </AuthAwareContent>
+                  <Lock className="h-4 w-4" />
+                  AI Suggest
+                </button>
               </label>
               <textarea
                 name="experience"
@@ -456,31 +427,25 @@ Generate a complete HTML cover letter with embedded CSS that looks professional 
             </button>
 
             {/* Custom Editor Option */}
-            <AuthAwareContent
-              showUpgradePrompt={true}
-              upgradeMessage="Sign in to access the custom editor and create your perfect cover letter from scratch"
-              upgradeButtonText="Sign In to Access"
-            >
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
-                    <p className="text-sm text-purple-700 mb-3">
-                      Use our custom editor to drag & drop elements, edit code, and create your perfect cover letter from scratch.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomEditor(true)}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                    >
-                      <Code className="h-4 w-4" />
-                      <span>Open Custom Editor</span>
-                    </button>
-                  </div>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div className="flex items-start space-x-2">
+                <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
+                  <p className="text-sm text-purple-700 mb-3">
+                    Use our custom editor to drag & drop elements, edit code, and create your perfect cover letter from scratch.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomEditor(true)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                  >
+                    <Code className="h-4 w-4" />
+                    <span>Open Custom Editor</span>
+                  </button>
                 </div>
               </div>
-            </AuthAwareContent>
+            </div>
           </form>
         </div>
         

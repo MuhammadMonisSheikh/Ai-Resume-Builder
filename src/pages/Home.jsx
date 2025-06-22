@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Sparkles, ThumbsUp, ThumbsDown, FileText, Download, Star, Zap, Shield, Users, Award, TrendingUp, CheckCircle, ArrowRight, Target, Lightbulb, Code, Lock, Monitor, Smartphone } from 'lucide-react';
 import ResumeForm from '../components/ResumeForm';
 import CoverLetterForm from '../components/CoverLetterForm';
 import AdPlaceholder from '../components/AdPlaceholder';
+import PWAInstall from '../components/PWAInstall';
 import { Helmet } from 'react-helmet-async';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';

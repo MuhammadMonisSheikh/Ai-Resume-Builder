@@ -227,89 +227,53 @@ const UserProfile = ({ onClose }) => {
                 value={formData.bio}
                 onChange={handleChange}
                 disabled={!isEditing}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 resize-none"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                 placeholder="Tell us about yourself..."
               />
             </div>
 
-            {/* Debug Section - Remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h4 className="font-medium text-yellow-900 mb-2">🔍 Firebase Debug Info (Development Only)</h4>
-                <div className="text-sm text-yellow-800 space-y-2">
-                  <div>
-                    <strong>Current User:</strong>
-                    <div className="font-mono text-xs bg-white p-2 rounded mt-1 break-all">
-                      {JSON.stringify(user, null, 2)}
-                    </div>
-                  </div>
-                  <div>
-                    <strong>User ID (UID):</strong>
-                    <div className="font-mono text-xs bg-white p-2 rounded mt-1">
-                      {user?.uid || 'Not available'}
-                    </div>
-                  </div>
-                  <div>
-                    <strong>Firebase Auth State:</strong>
-                    <div className="font-mono text-xs bg-white p-2 rounded mt-1">
-                      {user ? 'Authenticated' : 'Not authenticated'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex items-center space-x-2 text-red-600 hover:text-red-700 font-medium transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Sign Out</span>
-              </button>
-
-              <div className="flex items-center space-x-3">
-                {isEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4" />
-                          <span>Save Changes</span>
-                        </>
-                      )}
-                    </button>
-                  </>
-                ) : (
+              <div className="flex space-x-3">
+                {!isEditing ? (
                   <button
                     type="button"
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Edit className="h-4 w-4" />
                     <span>Edit Profile</span>
                   </button>
+                ) : (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
                 )}
               </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </form>
         </div>
