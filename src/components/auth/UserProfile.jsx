@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -16,6 +20,35 @@ const UserProfile = ({ onClose }) => {
   });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+
+  // Debug user data
+  useEffect(() => {
+    console.log('UserProfile - User data:', {
+      user: user ? {
+        uid: user.uid,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        displayName: user.displayName
+      } : null,
+      formData
+    });
+  }, [user, formData]);
+
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      console.log('UserProfile - Updating form data with user:', user);
+      setFormData({
+        firstName: user.firstName || user.displayName?.split(' ')[0] || '',
+        lastName: user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        location: user.location || '',
+        bio: user.bio || '',
+      });
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -59,6 +92,31 @@ const UserProfile = ({ onClose }) => {
   const handleLogout = () => {
     logout();
     onClose();
+  };
+
+  // Get user initials for profile display
+  const getUserInitials = () => {
+    if (!user) return '';
+    
+    const firstName = user.firstName || user.displayName?.split(' ')[0] || '';
+    const lastName = user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '';
+    
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    
+    if (user.displayName) {
+      return user.displayName;
+    }
+    
+    return user.email || 'User';
   };
 
   return (
@@ -111,16 +169,21 @@ const UserProfile = ({ onClose }) => {
           <div className="text-center mb-8">
             <div className="relative inline-block">
               <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4">
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                {getUserInitials()}
               </div>
               <button className="absolute bottom-0 right-0 w-8 h-8 bg-white border-2 border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors">
                 <Camera className="h-4 w-4 text-gray-600" />
               </button>
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
-              {user?.firstName} {user?.lastName}
+              {getUserDisplayName()}
             </h3>
             <p className="text-gray-600">{user?.email}</p>
+            {!user?.firstName && (
+              <p className="text-xs text-yellow-600 mt-1">
+                ⚠️ Profile data loading... (offline mode)
+              </p>
+            )}
           </div>
 
           {/* Profile Form */}

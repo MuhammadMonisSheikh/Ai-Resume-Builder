@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Trash2, Bell, Download, Database, Smartphone } from 'lucide-react';
 import { usePWA } from '../hooks/usePWA';
 
@@ -15,14 +15,17 @@ const PWASettings = ({ isOpen, onClose }) => {
     sendNotification
   } = usePWA();
 
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [notificationPermission, setNotificationPermission] = useState('default');
   const [offlineDataKeys, setOfflineDataKeys] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
+      if ('Notification' in window) {
+        setNotificationPermission(Notification.permission);
+      }
       setOfflineDataKeys(getOfflineDataKeys());
     }
-  }, [isOpen]);
+  }, [isOpen, getOfflineDataKeys]);
 
   const handleNotificationPermission = async () => {
     const granted = await requestNotificationPermission();

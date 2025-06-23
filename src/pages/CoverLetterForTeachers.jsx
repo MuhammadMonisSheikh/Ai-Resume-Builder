@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React from 'react';
 import { BookOpen, Users, Award, Heart } from 'lucide-react';
 import AdPlaceholder from '../components/AdPlaceholder';

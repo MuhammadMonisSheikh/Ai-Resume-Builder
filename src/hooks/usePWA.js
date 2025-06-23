@@ -1,12 +1,19 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import { useState, useEffect } from 'react';
 
 export const usePWA = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(true);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
 
   useEffect(() => {
+    // Set initial online status
+    setIsOnline(navigator.onLine);
+
     // Check if app is installed/standalone
     const checkInstallStatus = () => {
       const isStandaloneMode = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;

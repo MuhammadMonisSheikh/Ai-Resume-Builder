@@ -1,5 +1,10 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, X, Send, Lightbulb, ArrowLeft } from 'lucide-react';
+import { supabase } from '../config/supabase';
 
 const AICommandPortal = ({ 
   isOpen, 
@@ -166,9 +171,9 @@ const AICommandPortal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Sparkles className="h-6 w-6" />
@@ -245,24 +250,26 @@ const AICommandPortal = ({
             </form>
           </div>
 
-          {/* Suggested Commands */}
-          <div>
-            <div className="flex items-center space-x-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-700">Quick Suggestions:</span>
+          {/* AI Suggestions */}
+          {suggestedCommands.length > 0 && (
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <Lightbulb className="h-5 w-5 text-yellow-500" />
+                <h4 className="font-semibold text-gray-800">Suggestions</h4>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {suggestedCommands.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleCommandClick(suggestion)}
+                    className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full hover:bg-purple-100 hover:text-purple-700 transition-colors text-sm"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {suggestedCommands.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleCommandClick(suggestion)}
-                  className="text-left p-3 bg-gray-50 hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-lg transition-colors text-sm text-gray-700 hover:text-purple-700"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Context Information */}
           {(Object.keys(context).length > 0 || Object.keys(formData).length > 0) && (

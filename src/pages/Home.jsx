@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ThumbsUp, ThumbsDown, FileText, Download, Star, Zap, Shield, Users, Award, TrendingUp, CheckCircle, ArrowRight, Target, Lightbulb, Code, Lock, Monitor, Smartphone } from 'lucide-react';
@@ -14,22 +18,33 @@ const Home = () => {
   const [aiCommand, setAiCommand] = useState('');
   const [aiResult, setAiResult] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(false);
   const previewRef = useRef(null);
   const [showGuidelines, setShowGuidelines] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
+  // Track page loading
+  useEffect(() => {
+    console.log('Home page loading...');
+    // Set page loaded immediately since this component is already mounted
+    setPageLoaded(true);
+    console.log('Home page loaded successfully');
+  }, []);
+
   const handleAICommand = async (e) => {
     e.preventDefault();
     if (!aiCommand.trim()) return;
-    setAiLoading(true);
-    setAiResult('');
-    setFeedback(null);
-    setFeedbackComment('');
-    setFeedbackSubmitted(false);
     
-    const prompt = `You are an expert career assistant and designer. ${aiCommand}
+    try {
+      setAiLoading(true);
+      setAiResult('');
+      setFeedback(null);
+      setFeedbackComment('');
+      setFeedbackSubmitted(false);
+      
+      const prompt = `You are an expert career assistant and designer. ${aiCommand}
 
 Generate the requested document in professional HTML format with dynamic design that adapts to the content.
 
@@ -49,47 +64,73 @@ If the user requests code, include code blocks using markdown (\`\`\`language\nc
 
 Generate a complete HTML document with embedded CSS that looks professional and modern. The design should be visually appealing while maintaining readability and professionalism.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer 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`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 2000,
-        temperature: 0.8
-      })
-    });
-    const result = await response.json();
-    setAiResult(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
-    setAiLoading(false);
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer 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`
+        },
+        body: JSON.stringify({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 2000,
+          temperature: 0.8
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      setAiResult(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
+    } catch (error) {
+      console.error('AI command error:', error);
+      setAiResult('Sorry, there was an error generating your content. Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   useEffect(() => {
     if (aiResult && previewRef.current) {
-      previewRef.current.querySelectorAll('pre code').forEach(block => {
-        hljs.highlightElement(block);
-      });
+      try {
+        previewRef.current.querySelectorAll('pre code').forEach(block => {
+          hljs.highlightElement(block);
+        });
+      } catch (error) {
+        console.error('Error highlighting code:', error);
+      }
     }
   }, [aiResult]);
 
   const handleCopy = () => {
-    if (aiResult) navigator.clipboard.writeText(aiResult);
+    if (aiResult) {
+      try {
+        navigator.clipboard.writeText(aiResult);
+      } catch (error) {
+        console.error('Copy error:', error);
+      }
+    }
   };
 
   const handleDownloadPDF = async () => {
     if (!previewRef.current) return;
-    const html2canvas = (await import('html2canvas')).default;
-    const jsPDF = (await import('jspdf')).default;
-    const canvas = await html2canvas(previewRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save('ai-document.pdf');
+    
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+      const canvas = await html2canvas(previewRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width, canvas.height] });
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save('ai-document.pdf');
+    } catch (error) {
+      console.error('PDF download error:', error);
+    }
   };
 
+  // Remove the loading state check - always show content
   return (
     <>
       <Helmet>
@@ -100,6 +141,19 @@ Generate a complete HTML document with embedded CSS that looks professional and 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Top Ad */}
           <AdPlaceholder adSlot="YOUR_TOP_AD_SLOT_ID" />
+
+          {/* Hero Section */}
+          <div className="text-center my-12">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <Sparkles className="h-8 w-8 text-blue-600" />
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
+                AI-Powered Resume Builder
+              </h1>
+            </div>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Create professional, ATS-optimized resumes that get past the bots. Our AI tools help you stand out and get hired faster.
+            </p>
+          </div>
 
           {/* AI Command Box */}
           <div className="max-w-2xl mx-auto mb-10 bg-white rounded-xl shadow p-6">
@@ -218,19 +272,6 @@ Generate a complete HTML document with embedded CSS that looks professional and 
             )}
           </div>
 
-          {/* Hero Section */}
-          <div className="text-center my-12">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <Sparkles className="h-8 w-8 text-blue-600" />
-              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
-                AI-Powered Resume Builder
-              </h1>
-            </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Create professional, ATS-optimized resumes that get past the bots. Our AI tools help you stand out and get hired faster.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3">
               {/* Tab Navigation */}
@@ -268,11 +309,6 @@ Generate a complete HTML document with embedded CSS that looks professional and 
                 <AdPlaceholder adSlot="YOUR_SIDEBAR_AD_SLOT_ID" />
               </div>
             </div>
-          </div>
-          
-          {/* Bottom Ad */}
-          <div className="mt-12">
-              <AdPlaceholder adSlot="YOUR_BOTTOM_AD_SLOT_ID" />
           </div>
         </main>
       </div>

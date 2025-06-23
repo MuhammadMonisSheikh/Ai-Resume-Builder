@@ -1,7 +1,11 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 // Local Data Service for IndexedDB operations
 class LocalDataService {
   constructor() {
-    this.dbName = 'ResumeAppDB';
+    this.dbName = 'ai-resume-pro-data';
     this.version = 1;
   }
 

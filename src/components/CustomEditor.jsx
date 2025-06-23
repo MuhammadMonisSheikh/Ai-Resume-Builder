@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Code, 

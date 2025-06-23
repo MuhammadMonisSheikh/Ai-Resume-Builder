@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { FileText, Loader2, CheckCircle, X, Target, Lightbulb, Sparkles, Code, Lock } from 'lucide-react';
 import CoverLetterPreview from './CoverLetterPreview';

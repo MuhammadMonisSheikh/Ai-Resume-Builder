@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, Printer, Eye, EyeOff, Smartphone, Monitor, Share2, FileDown, Linkedin, Twitter, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';

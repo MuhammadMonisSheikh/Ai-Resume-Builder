@@ -1,7 +1,12 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Check, X, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -22,8 +27,9 @@ const SignUp = () => {
     number: false,
     special: false,
   });
+  const [loading, setLoading] = useState(false);
 
-  const { register, error } = useAuth();
+  const { signup, error } = useAuth();
   const navigate = useNavigate();
 
   // Redirect to home page after successful registration
@@ -66,18 +72,17 @@ const SignUp = () => {
       return;
     }
 
-    const result = await register({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-    });
-    
-    if (result.success) {
+    setLoading(true);
+    try {
+      await signup(formData.email, formData.password, `${formData.firstName} ${formData.lastName}`);
+      toast.success('Account created successfully! Welcome!');
       setSuccess(true);
+    } catch (error) {
+      toast.error(error.message || 'Failed to sign up.');
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   const isValidEmail = (email) => {
@@ -304,10 +309,10 @@ const SignUp = () => {
             <div>
               <button
                 type="submit"
-                disabled={isSubmitting || !isFormValid()}
+                disabled={isSubmitting || !isFormValid() || loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Creating account...' : 'Create Account'}
+                {loading ? 'Creating account...' : 'Create Account'}
               </button>
             </div>
           </form>

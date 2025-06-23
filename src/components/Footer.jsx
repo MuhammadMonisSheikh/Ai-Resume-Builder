@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Mail, Phone, Github, Linkedin, Twitter, Facebook } from 'lucide-react';

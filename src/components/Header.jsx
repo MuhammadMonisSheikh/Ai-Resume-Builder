@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { FileText, Menu, X, Settings, Download, User, LogOut, ChevronDown } from 'lucide-react';
@@ -14,6 +18,45 @@ const Header = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const userMenuRef = useRef(null);
+
+  // Debug user state
+  useEffect(() => {
+    console.log('Header - User state changed:', {
+      isAuthenticated,
+      user: user ? {
+        uid: user.uid,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        displayName: user.displayName
+      } : null
+    });
+  }, [user, isAuthenticated]);
+
+  // Get user initials for profile display
+  const getUserInitials = () => {
+    if (!user) return '';
+    
+    const firstName = user.firstName || user.displayName?.split(' ')[0] || '';
+    const lastName = user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '';
+    
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    if (user.firstName && user.lastName) {
+      return user.firstName;
+    }
+    
+    if (user.displayName) {
+      return user.displayName.split(' ')[0];
+    }
+    
+    return user.email?.split('@')[0] || 'User';
+  };
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -51,7 +94,7 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link to="/" className="flex items-center space-x-2" aria-label="AI Resume Pro, back to homepage">
               <img className="h-8 w-auto" src="/icons/icon-192x192.png" alt="AI Resume Pro Logo" />
               <span className="text-xl font-bold text-white">AI Resume Pro</span>
             </Link>
@@ -81,6 +124,21 @@ const Header = () => {
 
           {/* Authentication Section */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* Debug Info - Remove this in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
+                Auth: {isAuthenticated ? '✅' : '❌'} | 
+                User: {user ? `${user.firstName || 'No name'}` : 'None'}
+              </div>
+            )}
+            
+            {/* Offline Indicator */}
+            {!navigator.onLine && (
+              <div className="text-xs text-yellow-400 bg-yellow-900 px-2 py-1 rounded">
+                ⚠️ Offline
+              </div>
+            )}
+            
             {isAuthenticated ? (
               <div className="relative">
                 <button
@@ -88,9 +146,9 @@ const Header = () => {
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                    {getUserInitials()}
                   </div>
-                  <span className="text-sm">{user?.firstName}</span>
+                  <span className="text-sm">{getUserDisplayName()}</span>
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
@@ -207,9 +265,9 @@ const Header = () => {
               <div className="flex flex-col items-center space-y-4">
                 <div className="flex items-center space-x-2 text-gray-300">
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                    {getUserInitials()}
                   </div>
-                  <span className="text-xl">{user?.firstName} {user?.lastName}</span>
+                  <span className="text-xl">{getUserDisplayName()}</span>
                 </div>
                 <button
                   onClick={() => {
@@ -257,7 +315,7 @@ const Header = () => {
 
       {/* PWA Settings Modal */}
       {isSettingsOpen && (
-        <PWASettings onClose={() => setIsSettingsOpen(false)} />
+        <PWASettings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       )}
       
       {/* User Profile Modal */}

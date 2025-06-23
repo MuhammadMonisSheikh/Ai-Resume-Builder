@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 // ResumeForm component - Auth system removed
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Briefcase, GraduationCap, Award, Loader2, Target, FileText, CheckCircle, Star, Lightbulb, TrendingUp, ChevronDown, Plus, X, Monitor, Smartphone, Sparkles, Code, Lock } from 'lucide-react';
@@ -8,10 +12,12 @@ import Modal from './Modal';
 import CustomEditor from './CustomEditor';
 import AICommandPortal from './AICommandPortal';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
+import AdPlaceholder from './AdPlaceholder';
 
 const ResumeForm = () => {
   const { saveOfflineData, getOfflineData, isOnline } = usePWA();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -110,8 +116,25 @@ const ResumeForm = () => {
     'Analyzed', 'Optimized', 'Streamlined', 'Launched', 'Generated', 'Maintained', 'Trained', 'Mentored', 'Collaborated', 'Delivered'
   ];
 
+  // Notification for login required using react-toastify
+  function notifyLoginRequired() {
+    toast.info('Please create an account or log in first!', {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      notifyLoginRequired();
+      return;
+    }
     calculateATSScore();
     saveOfflineData('resumeForm', formData);
     if (!isOnline) {
@@ -404,7 +427,7 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
     setGeneratedResumeData(null);
   };
 
-  const handleAISuggest = async (field, index = null) => {
+  const handleAISuggest = (field, index = null) => {
     setAiCommandField(field);
     setAiCommandIndex(index);
     setShowAICommandPortal(true);
@@ -462,673 +485,554 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
     navigator.clipboard.writeText(aiGeneratedContent);
   };
 
+  // Modified Custom Editor open to require login
+  const handleOpenCustomEditor = () => {
+    if (!isAuthenticated) {
+      notifyLoginRequired();
+      return;
+    }
+    setShowCustomEditor(true);
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Form Fields Section (Left) */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <div className="flex items-center space-x-2 mb-4">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <h2 className="text-2xl font-bold text-gray-900">ATS-Friendly Resume</h2>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-lg space-y-6">
-              {/* Personal Details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Enter your full name"
-                    spellCheck={true}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="your.email@example.com"
-                    spellCheck={true}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="+1 (555) 123-4567"
-                    spellCheck={true}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="City, State"
-                    spellCheck={true}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn Profile</label>
-                  <input
-                    type="url"
-                    name="linkedin"
-                    value={formData.linkedin}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="https://linkedin.com/in/yourprofile"
-                    spellCheck={true}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Job Title *</label>
-                  <input
-                    type="text"
-                    name="jobTitle"
-                    value={formData.jobTitle}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Software Developer"
-                    spellCheck={true}
-                  />
-                </div>
-              </div>
-
-              {/* Profile Photo Upload */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <User className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Profile Photo (Optional)</h3>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  {formData.photo ? (
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <img 
-                          src={formData.photo} 
-                          alt="Profile" 
-                          className="w-20 h-20 rounded-full object-cover border-2 border-blue-200"
-                        />
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Photo uploaded successfully!</p>
-                        <p className="text-xs text-gray-500">The AI will incorporate this into your resume design.</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-4">
-                      <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center bg-gray-50">
-                        <User className="h-8 w-8 text-gray-400" />
-                      </div>
-                      <div>
-                        <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                          Upload Photo
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageChange}
-                            className="hidden"
-                          />
-                        </label>
-                        <p className="text-xs text-gray-500 mt-1">JPEG, PNG up to 5MB. Will be automatically resized.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Industry and Experience */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Briefcase className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Professional Details</h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Target Industry *</label>
-                    <select
-                      name="targetIndustry"
-                      value={formData.targetIndustry}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="">Select Industry</option>
-                      {industries.map(industry => (
-                        <option key={industry} value={industry}>{industry}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level *</label>
-                    <select
-                      name="experienceLevel"
-                      value={formData.experienceLevel}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="entry">Entry Level (0-2 years)</option>
-                      <option value="mid">Mid Level (3-5 years)</option>
-                      <option value="senior">Senior Level (6+ years)</option>
-                      <option value="executive">Executive Level (10+ years)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Skills Section */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Award className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Skills & Competencies</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    Technical Skills
-                    <button
-                      type="button"
-                      className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                      disabled
-                      title="Sign in to use AI suggestions"
-                    >
-                      <Lock className="h-4 w-4" />
-                      AI Suggest
-                    </button>
-                  </label>
-                  <textarea
-                    name="skills"
-                    value={formData.skills}
-                    onChange={handleChange}
-                    rows={3}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="JavaScript, React, Node.js, Python, SQL, AWS, Git, Docker..."
-                    spellCheck={true}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Separate skills with commas. Include both technical and soft skills.</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
-                  {formData.languages.map((lang, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
-                      <input
-                        type="text"
-                        name="name"
-                        value={lang.name}
-                        onChange={(e) => handleChange(e)}
-                        placeholder="Language"
-                        className="w-full sm:w-auto flex-grow px-4 py-3 border border-gray-300 rounded-lg"
-                        spellCheck={true}
-                      />
-                      <select
-                        name="level"
-                        value={lang.level}
-                        onChange={(e) => handleChange(e)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg"
-                      >
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                      </select>
-                      {formData.languages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            const newLanguages = [...formData.languages];
-                            newLanguages.splice(index, 1);
-                            setFormData({ ...formData, languages: newLanguages });
-                          }}
-                          className="text-red-500 p-2"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      setFormData({
-                        ...formData,
-                        languages: [
-                          ...formData.languages,
-                          { name: '', level: 3 }
-                        ]
-                      });
-                    }}
-                    className="w-full mt-2 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-semibold hover:bg-blue-200 transition-colors"
-                  >
-                    Add Language
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
-                  <textarea
-                    name="certifications"
-                    value={formData.certifications}
-                    onChange={handleChange}
-                    rows={2}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="AWS Certified Solutions Architect, PMP, Google Analytics Certification..."
-                    spellCheck={true}
-                  />
-                </div>
-              </div>
-
-              {/* Education */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <GraduationCap className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Education</h3>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Education Background *</label>
-                  <textarea
-                    name="education"
-                    value={formData.education}
-                    onChange={handleChange}
-                    rows={3}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Bachelor's in Computer Science, University Name, 2020-2024, GPA: 3.8"
-                    spellCheck={true}
-                  />
-                </div>
-              </div>
-
-              {/* Experience */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
-                </div>
-
-                {formData.experience.map((exp, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Job Title</label>
-                        <input
-                          type="text"
-                          name="jobTitle"
-                          value={exp.jobTitle}
-                          onChange={(e) => {
-                            const newExperience = [...formData.experience];
-                            newExperience[index][e.target.name] = e.target.value;
-                            setFormData({ ...formData, experience: newExperience });
-                          }}
-                          placeholder="Job Title"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          spellCheck={true}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Company</label>
-                        <input
-                          type="text"
-                          name="company"
-                          value={exp.company}
-                          onChange={(e) => {
-                            const newExperience = [...formData.experience];
-                            newExperience[index][e.target.name] = e.target.value;
-                            setFormData({ ...formData, experience: newExperience });
-                          }}
-                          placeholder="Company"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                          spellCheck={true}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Dates</label>
-                      <input
-                        type="text"
-                        name="dates"
-                        value={exp.dates}
-                        onChange={(e) => {
-                          const newExperience = [...formData.experience];
-                          newExperience[index][e.target.name] = e.target.value;
-                          setFormData({ ...formData, experience: newExperience });
-                        }}
-                        placeholder="Dates (e.g., Jan 2020 - Dec 2022)"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        spellCheck={true}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Description</label>
-                      <textarea
-                        name="description"
-                        value={exp.description}
-                        onChange={(e) => {
-                          const newExperience = [...formData.experience];
-                          newExperience[index][e.target.name] = e.target.value;
-                          setFormData({ ...formData, experience: newExperience });
-                        }}
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                        placeholder="Describe your responsibilities and achievements..."
-                        spellCheck={true}
-                      />
-                    </div>
-                    {formData.experience.length > 1 && (
-                      <button type="button" onClick={(e) => {
-                        const newExperience = [...formData.experience];
-                        newExperience.splice(index, 1);
-                        setFormData({ ...formData, experience: newExperience });
-                      }} className="text-red-500 font-semibold">Remove</button>
-                    )}
-                    <button
-                      type="button"
-                      className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
-                      onClick={() => handleAISuggest('description', index)}
-                      disabled={aiLoading['description_' + index]}
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {aiLoading['description_' + index] ? 'Generating...' : 'AI Suggest'}
-                    </button>
-                  </div>
-                ))}
-                <button type="button" onClick={(e) => {
-                  setFormData({
-                    ...formData,
-                    experience: [
-                      ...formData.experience,
-                      { jobTitle: '', company: '', dates: '', description: '' }
-                    ]
-                  });
-                }} className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition-colors">Add Experience</button>
-              </div>
-
-              {/* Additional Sections */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Conferences & Courses</label>
-                <textarea
-                  name="conferences"
-                  value={formData.conferences}
-                  onChange={handleChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                  placeholder="Data Handling BOOTCAMP, Center for Creative Leadership..."
-                  spellCheck={true}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Strengths</label>
-                  <textarea
-                    name="strengths"
-                    value={formData.strengths}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                    placeholder="Creative Problem Solving, Strong Leadership, etc."
-                    spellCheck={true}
-                  />
-                </div>
-              </div>
-
-              {/* Summary Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Professional Summary
-                  <button
-                    type="button"
-                    className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                    disabled
-                    title="Sign in to use AI suggestions"
-                  >
-                    <Lock className="h-4 w-4" />
-                    AI Suggest
-                  </button>
-                </label>
-                <textarea
-                  name="summary"
-                  value={formData.summary}
-                  onChange={handleChange}
-                  rows={3}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Write a brief summary about yourself..."
-                  spellCheck={true}
-                />
-              </div>
-
-              {/* Achievements Section */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  Achievements
-                  <button
-                    type="button"
-                    className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
-                    disabled
-                    title="Sign in to use AI suggestions"
-                  >
-                    <Lock className="h-4 w-4" />
-                    AI Suggest
-                  </button>
-                </label>
-                <textarea
-                  name="achievements"
-                  value={formData.achievements}
-                  onChange={handleChange}
-                  rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="List your key achievements..."
-                  spellCheck={true}
-                />
-              </div>
-
-              {/* Design Preferences */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-lg font-semibold text-gray-900">Design Preferences</h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Design Style</label>
-                    <select
-                      value={designPreference}
-                      onChange={(e) => setDesignPreference(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value="auto">Auto (AI chooses best)</option>
-                      <option value="modern">Modern & Clean</option>
-                      <option value="professional">Professional & Traditional</option>
-                      <option value="creative">Creative & Colorful</option>
-                      <option value="minimalist">Minimalist</option>
-                      <option value="tech">Tech-focused</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Generate Multiple Designs</label>
-                    <select
-                      value={generationCount}
-                      onChange={(e) => setGenerationCount(parseInt(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    >
-                      <option value={1}>1 Design</option>
-                      <option value={2}>2 Designs</option>
-                      <option value={3}>3 Designs</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-blue-800 mb-1">Smart Design Features</h4>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• AI adapts layout based on your content and industry</li>
-                        <li>• Professional color schemes that match your field</li>
-                        <li>• Responsive design for all devices</li>
-                        <li>• ATS-friendly formatting with modern styling</li>
-                        {formData.photo && <li>• Your photo will be professionally integrated</li>}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Custom Editor Option */}
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <div className="flex items-start space-x-2">
-                    <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
-                      <p className="text-sm text-purple-700 mb-3">
-                        Use our custom editor to drag & drop elements, edit code, and create your perfect design from scratch.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowCustomEditor(true)}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
-                      >
-                        <Code className="h-4 w-4" />
-                        <span>Open Custom Editor</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Generating ATS-Optimized Resume...</span>
-                  </div>
-                ) : (
-                  'Generate ATS-Friendly Resume'
-                )}
-              </button>
-            </div>
+    <div className="space-y-8">
+      {/* Personal Information */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Enter your full name"
+              spellCheck={true}
+            />
           </div>
 
-          {/* Sidebar Section (Right) */}
-          <div className="lg:col-span-1 relative">
-            <div className="sticky top-8 space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="your.email@example.com"
+              spellCheck={true}
+            />
+          </div>
 
-              {/* ATS Preview Card */}
-              <div className="bg-gradient-to-br from-purple-600 to-blue-500 p-6 rounded-xl shadow-lg text-white">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Target className="h-6 w-6" />
-                  <h3 className="text-xl font-bold">ATS-Friendly Resume Preview</h3>
-                </div>
-                <div className="flex justify-center bg-blue-900 bg-opacity-30 rounded-lg p-1">
-                  <button type="button" onClick={() => setPreviewMode('Desktop')} className={`w-1/2 py-2 text-sm font-semibold rounded-md transition-all ${previewMode === 'Desktop' ? 'bg-white text-blue-600' : 'bg-transparent'}`}>
-                    <Monitor className="inline-block h-4 w-4 mr-1"/> Desktop
-                  </button>
-                  <button type="button" onClick={() => setPreviewMode('Mobile')} className={`w-1/2 py-2 text-sm font-semibold rounded-md transition-all ${previewMode === 'Mobile' ? 'bg-white text-blue-600' : 'bg-transparent'}`}>
-                    <Smartphone className="inline-block h-4 w-4 mr-1"/> Mobile
-                  </button>
-                </div>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="+1 (555) 123-4567"
+              spellCheck={true}
+            />
+          </div>
 
-              {/* ATS Optimization Tips Card */}
-              <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Lightbulb className="h-5 w-5 mr-2 text-yellow-500"/> ATS Optimization Tips</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <h4 className="font-semibold text-green-600 flex items-center"><CheckCircle className="h-4 w-4 mr-2"/>What Works Well</h4>
-                    <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                      <li>Standard fonts</li>
-                      <li>Clear section headers</li>
-                      <li>Keyword-rich content</li>
-                      <li>Simple formatting</li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-red-600 flex items-center"><X className="h-4 w-4 mr-2"/>Avoid These</h4>
-                    <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                      <li>Complex graphics</li>
-                      <li>Tables or columns</li>
-                      <li>Unusual fonts</li>
-                      <li>Headers/footers</li>
-                    </ul>
-                  </div>
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="City, State"
+              spellCheck={true}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">LinkedIn Profile</label>
+            <input
+              type="url"
+              name="linkedin"
+              value={formData.linkedin}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="https://linkedin.com/in/yourprofile"
+              spellCheck={true}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Job Title *</label>
+            <input
+              type="text"
+              name="jobTitle"
+              value={formData.jobTitle}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              placeholder="Software Developer"
+              spellCheck={true}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Professional Summary */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="summary" className="block text-sm font-medium text-gray-700">
+            Professional Summary
+          </label>
+          <button
+            type="button"
+            onClick={() => handleAISuggest('summary')}
+            className="flex items-center space-x-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-md hover:bg-purple-200"
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>AI Suggest</span>
+          </button>
+        </div>
+        <textarea
+          id="summary"
+          name="summary"
+          value={formData.summary}
+          onChange={handleChange}
+          rows="4"
+          className="w-full p-2 border border-gray-300 rounded-md"
+          placeholder="Write a brief summary about yourself..."
+        ></textarea>
+      </div>
+
+      {/* Achievements */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="achievements" className="block text-sm font-medium text-gray-700">
+            Achievements
+          </label>
+          <button
+            type="button"
+            onClick={() => handleAISuggest('achievements')}
+            className="flex items-center space-x-1 text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-md hover:bg-purple-200"
+          >
+            <Sparkles className="h-3 w-3" />
+            <span>AI Suggest</span>
+          </button>
+        </div>
+        <textarea
+          id="achievements"
+          name="achievements"
+          value={formData.achievements}
+          onChange={handleChange}
+          rows="4"
+          className="w-full p-2 border border-gray-300 rounded-md"
+          placeholder="List your key achievements..."
+        ></textarea>
+      </div>
+
+      {/* Industry and Experience */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Briefcase className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Professional Details</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Industry *</label>
+            <select
+              name="targetIndustry"
+              value={formData.targetIndustry}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="">Select Industry</option>
+              {industries.map(industry => (
+                <option key={industry} value={industry}>{industry}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level *</label>
+            <select
+              name="experienceLevel"
+              value={formData.experienceLevel}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="entry">Entry Level (0-2 years)</option>
+              <option value="mid">Mid Level (3-5 years)</option>
+              <option value="senior">Senior Level (6+ years)</option>
+              <option value="executive">Executive Level (10+ years)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Skills Section */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Award className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Skills & Competencies</h3>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+            Technical Skills
+            <button
+              type="button"
+              className="ml-2 px-2 py-1 bg-gray-100 text-gray-500 rounded flex items-center gap-1 text-xs cursor-not-allowed"
+              disabled
+              title="Sign in to use AI suggestions"
+            >
+              <Lock className="h-4 w-4" />
+              AI Suggest
+            </button>
+          </label>
+          <textarea
+            name="skills"
+            value={formData.skills}
+            onChange={handleChange}
+            rows={3}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="JavaScript, React, Node.js, Python, SQL, AWS, Git, Docker..."
+            spellCheck={true}
+          />
+          <p className="text-xs text-gray-500 mt-1">Separate skills with commas. Include both technical and soft skills.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+          {formData.languages.map((lang, index) => (
+            <div key={index} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+              <input
+                type="text"
+                name="name"
+                value={lang.name}
+                onChange={(e) => handleChange(e)}
+                placeholder="Language"
+                className="w-full sm:w-auto flex-grow px-4 py-3 border border-gray-300 rounded-lg"
+                spellCheck={true}
+              />
+              <select
+                name="level"
+                value={lang.level}
+                onChange={(e) => handleChange(e)}
+                className="px-4 py-3 border border-gray-300 rounded-lg"
+              >
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+              {formData.languages.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const newLanguages = [...formData.languages];
+                    newLanguages.splice(index, 1);
+                    setFormData({ ...formData, languages: newLanguages });
+                  }}
+                  className="text-red-500 p-2"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={(e) => {
+              setFormData({
+                ...formData,
+                languages: [
+                  ...formData.languages,
+                  { name: '', level: 3 }
+                ]
+              });
+            }}
+            className="w-full mt-2 bg-blue-100 text-blue-700 py-2 px-4 rounded-lg font-semibold hover:bg-blue-200 transition-colors"
+          >
+            Add Language
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Certifications</label>
+          <textarea
+            name="certifications"
+            value={formData.certifications}
+            onChange={handleChange}
+            rows={2}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="AWS Certified Solutions Architect, PMP, Google Analytics Certification..."
+            spellCheck={true}
+          />
+        </div>
+      </div>
+
+      {/* Education */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <GraduationCap className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Education</h3>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Education Background *</label>
+          <textarea
+            name="education"
+            value={formData.education}
+            onChange={handleChange}
+            rows={3}
+            required
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            placeholder="Bachelor's in Computer Science, University Name, 2020-2024, GPA: 3.8"
+            spellCheck={true}
+          />
+        </div>
+      </div>
+
+      {/* Experience */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <FileText className="h-5 w-5 text-blue-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Work Experience</h3>
+        </div>
+
+        {formData.experience.map((exp, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Job Title</label>
+                <input
+                  type="text"
+                  name="jobTitle"
+                  value={exp.jobTitle}
+                  onChange={(e) => {
+                    const newExperience = [...formData.experience];
+                    newExperience[index][e.target.name] = e.target.value;
+                    setFormData({ ...formData, experience: newExperience });
+                  }}
+                  placeholder="Job Title"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  spellCheck={true}
+                />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Company</label>
+                <input
+                  type="text"
+                  name="company"
+                  value={exp.company}
+                  onChange={(e) => {
+                    const newExperience = [...formData.experience];
+                    newExperience[index][e.target.name] = e.target.value;
+                    setFormData({ ...formData, experience: newExperience });
+                  }}
+                  placeholder="Company"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                  spellCheck={true}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Dates</label>
+              <input
+                type="text"
+                name="dates"
+                value={exp.dates}
+                onChange={(e) => {
+                  const newExperience = [...formData.experience];
+                  newExperience[index][e.target.name] = e.target.value;
+                  setFormData({ ...formData, experience: newExperience });
+                }}
+                placeholder="Dates (e.g., Jan 2020 - Dec 2022)"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                spellCheck={true}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <textarea
+                name="description"
+                value={exp.description}
+                onChange={(e) => {
+                  const newExperience = [...formData.experience];
+                  newExperience[index][e.target.name] = e.target.value;
+                  setFormData({ ...formData, experience: newExperience });
+                }}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+                placeholder="Describe your responsibilities and achievements..."
+                spellCheck={true}
+              />
+            </div>
+            {formData.experience.length > 1 && (
+              <button type="button" onClick={(e) => {
+                const newExperience = [...formData.experience];
+                newExperience.splice(index, 1);
+                setFormData({ ...formData, experience: newExperience });
+              }} className="text-red-500 font-semibold">Remove</button>
+            )}
+            <button
+              type="button"
+              className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 flex items-center gap-1 text-xs"
+              onClick={() => handleAISuggest('description', index)}
+              disabled={aiLoading['description_' + index]}
+            >
+              <Sparkles className="h-4 w-4" />
+              {aiLoading['description_' + index] ? 'Generating...' : 'AI Suggest'}
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={(e) => {
+          setFormData({
+            ...formData,
+            experience: [
+              ...formData.experience,
+              { jobTitle: '', company: '', dates: '', description: '' }
+            ]
+          });
+        }} className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-semibold hover:bg-blue-200 transition-colors">Add Experience</button>
+      </div>
+
+      {/* Additional Sections */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Conferences & Courses</label>
+        <textarea
+          name="conferences"
+          value={formData.conferences}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+          placeholder="Data Handling BOOTCAMP, Center for Creative Leadership..."
+          spellCheck={true}
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Strengths</label>
+          <textarea
+            name="strengths"
+            value={formData.strengths}
+            onChange={handleChange}
+            rows={3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg"
+            placeholder="Creative Problem Solving, Strong Leadership, etc."
+            spellCheck={true}
+          />
+        </div>
+      </div>
+
+      {/* Design Preferences */}
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Sparkles className="h-5 w-5 text-purple-600" />
+          <h3 className="text-lg font-semibold text-gray-900">Design Preferences</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Design Style</label>
+            <select
+              value={designPreference}
+              onChange={(e) => setDesignPreference(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value="auto">Auto (AI chooses best)</option>
+              <option value="modern">Modern & Clean</option>
+              <option value="professional">Professional & Traditional</option>
+              <option value="creative">Creative & Colorful</option>
+              <option value="minimalist">Minimalist</option>
+              <option value="tech">Tech-focused</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Generate Multiple Designs</label>
+            <select
+              value={generationCount}
+              onChange={(e) => setGenerationCount(parseInt(e.target.value))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            >
+              <option value={1}>1 Design</option>
+              <option value={2}>2 Designs</option>
+              <option value={3}>3 Designs</option>
+            </select>
+          </div>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-2">
+            <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-blue-800 mb-1">Smart Design Features</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• AI adapts layout based on your content and industry</li>
+                <li>• Professional color schemes that match your field</li>
+                <li>• Responsive design for all devices</li>
+                <li>• ATS-friendly formatting with modern styling</li>
+                {formData.photo && <li>• Your photo will be professionally integrated</li>}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Custom Editor Option */}
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-start space-x-2">
+            <Code className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-purple-800 mb-1">Want More Control?</h4>
+              <p className="text-sm text-purple-700 mb-3">
+                Use our custom editor to drag & drop elements, edit code, and create your perfect design from scratch.
+              </p>
+              <button
+                type="button"
+                onClick={handleOpenCustomEditor}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center space-x-2"
+              >
+                <Code className="h-4 w-4" />
+                <span>Open Custom Editor</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <Modal 
-        isOpen={showPreviewModal} 
-        onClose={handleCloseModal} 
-        title="Your Generated Resume"
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={handleCopy}
-            className="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm mr-2"
-          >Copy</button>
-        </div>
-        <div ref={previewRef} dangerouslySetInnerHTML={{ __html: aiGeneratedContent }} className="bg-white rounded-xl shadow-lg p-4" />
-        {aiLoading.ai && <div className="text-center py-4">Generating with AI...</div>}
-      </Modal>
+        {isLoading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Generating ATS-Optimized Resume...</span>
+          </div>
+        ) : (
+          'Generate ATS-Friendly Resume'
+        )}
+      </button>
 
-      {/* Custom Editor */}
-      {showCustomEditor && (
-        <CustomEditor
-          formData={formData}
-          onClose={() => setShowCustomEditor(false)}
-          documentType="resume"
-        />
+      {/* Ad Placeholder - Only show in production */}
+      {process.env.NODE_ENV === 'production' && (
+        <div className="mt-6">
+          <AdPlaceholder adSlot="resume-bottom-ad" />
+        </div>
       )}
 
       {/* AI Command Portal */}

@@ -1,4 +1,7 @@
-const CACHE_NAME = 'ai-resume-pro-v7';
+const CACHE_NAME = 'ai-resume-pro-v8';
+const STATIC_CACHE = 'static-v8';
+const DYNAMIC_CACHE = 'dynamic-v8';
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -21,48 +24,18 @@ const urlsToCache = [
 // Install event - cache all critical resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache and caching all assets');
+    Promise.all([
+      caches.open(STATIC_CACHE).then((cache) => {
+        console.log('Caching static assets');
         return cache.addAll(urlsToCache);
+      }),
+      caches.open(DYNAMIC_CACHE).then((cache) => {
+        console.log('Dynamic cache ready');
+        return cache;
       })
+    ])
   );
-  self.skipWaiting(); // Force the new service worker to activate immediately
-});
-
-// Fetch event - use a "Stale-While-Revalidate" strategy
-self.addEventListener('fetch', (event) => {
-  // Only handle GET requests for caching - completely ignore others
-  if (event.request.method !== 'GET') {
-    return; // Don't handle non-GET requests at all
-  }
-
-  // Skip Firebase and other API requests
-  if (event.request.url.includes('firebase') || 
-      event.request.url.includes('googleapis') ||
-      event.request.url.includes('/api/')) {
-    return; // Let these pass through without caching
-  }
-
-  event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
-        const fetchedResponse = fetch(event.request).then((networkResponse) => {
-          // If we got a valid response, update the cache
-          if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch((error) => {
-          console.log('Fetch failed:', error);
-          return cachedResponse; // Return cached response if fetch fails
-        });
-
-        // Return the cached response immediately, then update the cache in the background.
-        return cachedResponse || fetchedResponse;
-      });
-    })
-  );
+  self.skipWaiting();
 });
 
 // Activate event - clean up old caches
@@ -71,15 +44,95 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      console.log('Service Worker activated');
+      return self.clients.claim();
     })
   );
 });
+
+// Fetch event - optimized caching strategy
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip unsupported URL schemes
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return;
+  }
+
+  // Skip API requests and external resources
+  if (url.pathname.includes('/api/') || 
+      url.hostname.includes('googleapis') ||
+      url.hostname.includes('googleads') ||
+      url.hostname.includes('doubleclick')) {
+    return;
+  }
+
+  // Handle different types of requests
+  if (url.pathname.endsWith('.html') || url.pathname === '/') {
+    // HTML files - Network First with fallback to cache
+    event.respondWith(networkFirst(request, STATIC_CACHE));
+  } else if (url.pathname.match(/\.(js|css)$/)) {
+    // JS/CSS files - Cache First with network fallback
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+  } else if (url.pathname.match(/\.(png|jpg|jpeg|gif|svg|webp|ico)$/)) {
+    // Images - Cache First with network fallback
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
+  } else {
+    // Other requests - Network First with fallback to cache
+    event.respondWith(networkFirst(request, DYNAMIC_CACHE));
+  }
+});
+
+// Cache First Strategy
+async function cacheFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cachedResponse = await cache.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    console.log('Cache first failed:', error);
+    return new Response('Network error', { status: 503 });
+  }
+}
+
+// Network First Strategy
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    console.log('Network first failed, trying cache:', error);
+    const cachedResponse = await cache.match(request);
+    return cachedResponse || new Response('Not available offline', { status: 503 });
+  }
+}
 
 // Background sync for offline form submissions
 self.addEventListener('sync', (event) => {
@@ -89,9 +142,7 @@ self.addEventListener('sync', (event) => {
 });
 
 function doBackgroundSync() {
-  // Handle offline form submissions when connection is restored
   return new Promise((resolve) => {
-    // You can implement offline form submission logic here
     console.log('Background sync completed');
     resolve();
   });

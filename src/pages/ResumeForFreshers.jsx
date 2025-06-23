@@ -1,3 +1,7 @@
+// Developed by Monis
+// Portfolio: https://portfolio-552de.web.app/
+// Feel free to contact for future updates or services.
+
 import React, { useState } from 'react';
 import { ArrowLeft, Target, CheckCircle, Download, Printer } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -289,6 +293,29 @@ const ResumeForFreshers = () => {
       <Helmet>
         <title>Fresher Resume Builder | Create Your First Resume for Free</title>
         <meta name="description" content="Just starting your career? Use our free resume builder to create a professional resume for freshers. Includes templates and examples for students and recent graduates." />
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "headline": "Fresher Resume Builder: Create Your First Resume for Free",
+              "author": {
+                "@type": "Organization",
+                "name": "AI Resume Pro"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "AI Resume Pro",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://ai-resume-pro.com/logo.png"
+                }
+              },
+              "datePublished": "2023-10-27",
+              "description": "A guide and tool for recent graduates and students to build their first professional resume for free, with templates and examples tailored for freshers."
+            }
+          `}
+        </script>
       </Helmet>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-center mb-4">Resume Builder for Freshers</h1>
