@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ai-resume-pro.com/" />
+    
+    <!-- Google AdSense Account -->
+    <meta name="google-adsense-account" content="ca-pub-5796513429666310">
+    
+    <!-- Primary Meta Tags -->
+    <title>AI Resume Pro | Free ATS Resume & Cover Letter Builder</title>
+    <meta name="description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization to land your next interview." />
+    <meta name="keywords" content="resume builder, free resume builder, cover letter generator, cv maker, ats-friendly resume, professional resume templates, resume creator, job application tools, online resume maker" />
+    <meta name="author" content="AI Resume Pro" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ai-resume-pro.com/" />
+    <meta property="og:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+    <meta property="og:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+    <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://ai-resume-pro.com/" />
+    <meta property="twitter:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+    <meta property="twitter:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+    <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+      /* Critical CSS for initial render */
+      body { 
+        margin: 0; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        background-color: #f9fafb;
+      }
+      #root { 
+        min-height: 100vh; 
+        display: flex;
+        flex-direction: column;
+      }
+      /* Remove loading styles that might interfere */
+    </style>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="data:text/jsx;base64,Ly8gRGV2ZWxvcGVkIGJ5IE1vbmlzCi8vIFBvcnRmb2xpbzogaHR0cHM6Ly9wb3J0Zm9saW8tNTUyZGUud2ViLmFwcC8KLy8gRmVlbCBmcmVlIHRvIGNvbnRhY3QgZm9yIGZ1dHVyZSB1cGRhdGVzIG9yIHNlcnZpY2VzLgoKaW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0JwppbXBvcnQgUmVhY3RET00gZnJvbSAncmVhY3QtZG9tL2NsaWVudCcKaW1wb3J0IEFwcCBmcm9tICcuL0FwcCcKaW1wb3J0ICcuL2luZGV4LmNzcyc7CgovLyBFcnJvciBib3VuZGFyeSBmb3IgdGhlIGVudGlyZSBhcHAKY29uc3QgaGFuZGxlRXJyb3IgPSAoZXJyb3IsIGVycm9ySW5mbykgPT4gewogIGNvbnNvbGUuZXJyb3IoJ0FwcCBFcnJvcjonLCBlcnJvciwgZXJyb3JJbmZvKTsKfTsKCi8vIFJlbmRlciB0aGUgYXBwIHdpdGggZXJyb3IgaGFuZGxpbmcKY29uc3Qgcm9vdCA9IFJlYWN0RE9NLmNyZWF0ZVJvb3QoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3Jvb3QnKSk7Cgp0cnkgewogIHJvb3QucmVuZGVyKAogICAgPFJlYWN0LlN0cmljdE1vZGU+CiAgICAgIDxBcHAgLz4KICAgIDwvUmVhY3QuU3RyaWN0TW9kZT4KICApOwp9IGNhdGNoIChlcnJvcikgewogIGNvbnNvbGUuZXJyb3IoJ0ZhaWxlZCB0byByZW5kZXIgYXBwOicsIGVycm9yKTsKICByb290LnJlbmRlcigKICAgIDxkaXYgY2xhc3NOYW1lPSJtaW4taC1zY3JlZW4gYmctZ3JheS01MCBmbGV4IGl0ZW1zLWNlbnRlciBqdXN0aWZ5LWNlbnRlciI+CiAgICAgIDxkaXYgY2xhc3NOYW1lPSJ0ZXh0LWNlbnRlciI+CiAgICAgICAgPGgxIGNsYXNzTmFtZT0idGV4dC0yeGwgZm9udC1ib2xkIHRleHQtZ3JheS05MDAgbWItNCI+U29tZXRoaW5nIHdlbnQgd3Jvbmc8L2gxPgogICAgICAgIDxwIGNsYXNzTmFtZT0idGV4dC1ncmF5LTYwMCBtYi00Ij5QbGVhc2UgcmVmcmVzaCB0aGUgcGFnZSBvciB0cnkgYWdhaW4gbGF0ZXIuPC9wPgogICAgICAgIDxidXR0b24gCiAgICAgICAgICBvbkNsaWNrPXsoKSA9PiB3aW5kb3cubG9jYXRpb24ucmVsb2FkKCl9IAogICAgICAgICAgY2xhc3NOYW1lPSJiZy1ibHVlLTYwMCB0ZXh0LXdoaXRlIHB4LTQgcHktMiByb3VuZGVkLWxnIGhvdmVyOmJnLWJsdWUtNzAwIgogICAgICAgID4KICAgICAgICAgIFJlZnJlc2ggUGFnZQogICAgICAgIDwvYnV0dG9uPgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogICk7Cn0=" as="script" crossorigin="anonymous">
+    <link rel="preload" href="/logo.png" as="image" type="image/png" crossorigin="anonymous">
+    
+    <!-- DNS prefetch for external domains (only if needed) -->
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    
+    <!-- Google AdSense - Load asynchronously and only when needed -->
+    <script>
+      // Defer AdSense loading
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5796513429666310';
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+        }, 2000); // Load after 2 seconds
+      });
+    </script>
+
+    <!-- JSON-LD Structured Data - Minified -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"AI Resume Pro","operatingSystem":"Web","applicationCategory":"ProductivityApplication","aggregateRating":{"@type":"AggregateRating","ratingValue":"4.9","ratingCount":"1289","bestRating":"5","worstRating":"1"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization.","url":"https://ai-resume-pro.com/","screenshot":"https://ai-resume-pro.com/og-image.png"}</script>
+    
+    <meta name="application-name" content="AI Resume Pro" />
+    <meta name="copyright" content="AI Resume Pro" />
+    <meta name="rating" content="General" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="AI Resume Pro" />
+    <meta property="twitter:site" content="@monis_vohra" />
+    <meta property="twitter:creator" content="@monis_vohra" />
+    
+    <!-- Optimized favicon loading -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    
+    <!-- Organization Structured Data - Minified -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"AI Resume Pro","url":"https://ai-resume-pro.com/","logo":"https://ai-resume-pro.com/logo.png","sameAs":["https://github.com/MuhammadMonisSheikh","https://www.linkedin.com/in/muhammad-monis-sheikh-18a881236/","https://x.com/monis_vohra","https://www.facebook.com/muhammadmonissh"],"contactPoint":[{"@type":"ContactPoint","email":"support@ai-resume-pro.com","contactType":"customer support"}],"description":"Create professional, ATS-friendly resumes and cover letters with the power of AI."}</script>
+    
+    <!-- WebSite Structured Data - Minified -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"AI Resume Pro","url":"https://ai-resume-pro.com/","potentialAction":{"@type":"SearchAction","target":"https://ai-resume-pro.com/search?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+    
+    <!-- BreadcrumbList Structured Data - Minified -->
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://ai-resume-pro.com/"},{"@type":"ListItem","position":2,"name":"Resume for Freshers","item":"https://ai-resume-pro.com/resume-for-freshers"},{"@type":"ListItem","position":3,"name":"Resume for Gulf Jobs","item":"https://ai-resume-pro.com/resume-for-gulf-jobs"},{"@type":"ListItem","position":4,"name":"Cover Letter for Teachers","item":"https://ai-resume-pro.com/cover-letter-for-teachers"}]}</script>
+    
+    <meta name="environment" content="production" id="meta-environment" />
+    
+    <!-- Script to swap favicon and meta tag in development (localhost) -->
+    <script>
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        var link = document.querySelector('link[rel="icon"]');
+        if (link) {
+          link.href = '/icons/react-dev-favicon.png';
+        }
+        var metaEnv = document.getElementById('meta-environment');
+        if (metaEnv) {
+          metaEnv.content = 'development';
+        }
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/js/index-MxVE3nxO.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/js/vendor-CA6pEULs.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/router-CEJF1XdO.js">
+    <link rel="modulepreload" crossorigin href="/assets/js/ui-CVXBtoA3.js">
+    <link rel="stylesheet" crossorigin href="/assets/css/index-CFoe4dQ0.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- PWA Service Worker Registration - Optimized -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        // Defer service worker registration
+        window.addEventListener('load', () => {
+          setTimeout(() => {
+            navigator.serviceWorker.register('/sw.js')
+              .then((registration) => {
+                console.log('SW registered: ', registration);
+              })
+              .catch((registrationError) => {
+                console.log('SW registration failed: ', registrationError);
+              });
+          }, 1000); // Register after 1 second
+        });
+      }
+    </script>
+  </body>
+</html>

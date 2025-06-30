@@ -1,0 +1,38 @@
+{
+  "short_name": "AI Resume",
+  "name": "AI Resume Pro - Free Resume & Cover Letter Builder",
+  "description": "Create professional, ATS-optimized resumes and cover letters with AI-powered tools.",
+  "id": "/",
+  "icons": [
+    { "src": "/icons/icon-72x72.png", "type": "image/png", "sizes": "72x72", "purpose": "any" },
+    { "src": "/icons/icon-96x96.png", "type": "image/png", "sizes": "96x96", "purpose": "any" },
+    { "src": "/icons/icon-128x128.png", "type": "image/png", "sizes": "128x128", "purpose": "any" },
+    { "src": "/icons/icon-144x144.png", "type": "image/png", "sizes": "144x144", "purpose": "any" },
+    { "src": "/icons/icon-152x152.png", "type": "image/png", "sizes": "152x152", "purpose": "any" },
+    { "src": "/icons/icon-192x192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icons/icon-384x384.png", "type": "image/png", "sizes": "384x384", "purpose": "any" },
+    { "src": "/icons/icon-512x512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512x512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Create New Resume",
+      "short_name": "New Resume",
+      "description": "Start building a new resume from scratch",
+      "url": "/",
+      "icons": [{ "src": "/icons/resume-shortcut.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Create New Cover Letter",
+      "short_name": "New Cover Letter",
+      "description": "Start writing a new cover letter",
+      "url": "/cover-letter",
+      "icons": [{ "src": "/icons/cover-letter-shortcut.png", "sizes": "192x192" }]
+    }
+  ]
+} 
