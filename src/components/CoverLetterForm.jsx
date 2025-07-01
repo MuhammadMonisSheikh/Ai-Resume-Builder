@@ -10,6 +10,7 @@ import { usePWA } from '../hooks/usePWA';
 import CustomEditor from './CustomEditor';
 import AICommandPortal from './AICommandPortal';
 import { useAuth } from '../contexts/AuthContext';
+import { generateAIContent } from '../services/aiProviderService';
 
 const CoverLetterForm = () => {
   const { saveOfflineData, getOfflineData } = usePWA();
@@ -187,45 +188,46 @@ const CoverLetterForm = () => {
     const jobType = formData.jobTitle ? 'Position: ' + formData.jobTitle : 'Professional position';
     const hasExperience = formData.experience ? 'User has provided detailed experience and skills.' : 'User needs to add more experience details.';
     
-    const prompt = `Generate a professional, modern cover letter in HTML with dynamic design that adapts to the content and industry.
+    const prompt = `You are an expert HTML developer and professional resume writer. Generate a complete, professional cover letter in HTML with embedded CSS styling.
 
-Requirements:
-- ${jobType}
-- ${industry}
-- ${hasExperience}
+REQUIREMENTS:
+- Job Title: ${formData.jobTitle || 'Professional Position'}
+- Company: ${formData.companyName || 'Target Company'}
+- Applicant Name: ${formData.name || 'Your Name'}
+- Email: ${formData.email || 'your.email@example.com'}
+- Experience: ${formData.experience || 'Professional experience and skills'}
+- Job Description: ${formData.jobDescription || 'Job requirements and responsibilities'}
 
-Design Guidelines:
-1. Choose colors and styling that match the industry (tech=blue/purple, healthcare=green/blue, finance=navy/gold, etc.)
-2. Create a modern, clean layout with professional typography
-3. Use appropriate spacing and visual hierarchy
-4. Include responsive design for mobile devices
-5. Make the cover letter engaging and visually appealing
-6. Use professional color schemes and subtle gradients
-7. Include proper letter formatting with date, address, and signature sections
-8. Highlight key skills and experience prominently
-9. Use modern CSS with clean, readable fonts
-10. Ensure the design complements the content length and type
+HTML TEMPLATE REQUIREMENTS:
+1. Create a complete HTML document with <!DOCTYPE html>, <html>, <head>, and <body> tags
+2. Include embedded CSS in a <style> tag with modern, professional styling
+3. Use a gradient background (blue/purple for tech, green/blue for healthcare, navy/gold for finance)
+4. Include proper letter formatting with date, recipient address, and signature
+5. Make it responsive and mobile-friendly
+6. Use professional typography (Segoe UI, Arial, or similar)
+7. Include visual elements like borders, shadows, and spacing
+8. Highlight key skills and achievements with special styling
+9. Use modern CSS features like gradients, shadows, and rounded corners
+10. Ensure the design is visually appealing and professional
 
-User Data: ${JSON.stringify(formData)}
+CONTENT REQUIREMENTS:
+- Write compelling, professional content that matches the job description
+- Include specific achievements and quantifiable results
+- Use industry-specific keywords from the job description
+- Make it personalized to the company and position
+- Keep it concise but impactful (3-4 paragraphs)
+- Include a strong call-to-action
 
 Generate a complete HTML cover letter with embedded CSS that looks professional and modern. The design should be visually appealing while maintaining readability and professionalism.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer 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`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 1500,
-        temperature: 0.8
-      })
-    });
-    const result = await response.json();
-    setAiGeneratedContent(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
-    setShowPreviewModal(true);
+    try {
+      const result = await generateAIContent(prompt, { max_tokens: 2000, temperature: 0.8 });
+      setAiGeneratedContent(result);
+      setShowPreviewModal(true);
+    } catch (error) {
+      setAiGeneratedContent('All AI providers are unavailable or rate-limited. Please try again later.');
+      setShowPreviewModal(true);
+    }
     setIsLoading(false);
   };
 

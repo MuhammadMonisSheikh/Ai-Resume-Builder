@@ -14,6 +14,23 @@ const ResumeForGulfJobs = () => {
       <Helmet>
         <title>Gulf CV Builder | Create a Professional CV for Dubai, UAE & Gulf Jobs</title>
         <meta name="description" content="Build a professional CV for jobs in the Gulf region. Our free CV maker includes templates and formats preferred by employers in Dubai, UAE, Saudi Arabia, and more." />
+        <meta name="keywords" content="gulf cv, dubai cv, uae resume, saudi arabia cv, gulf jobs, professional cv, free cv builder, ats cv, middle east jobs" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://ai-resume-pro.com/resume-for-gulf-jobs" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ai-resume-pro.com/resume-for-gulf-jobs" />
+        <meta property="og:title" content="Gulf CV Builder | Create a Professional CV for Dubai, UAE & Gulf Jobs" />
+        <meta property="og:description" content="Build a professional CV for jobs in the Gulf region. Our free CV maker includes templates and formats preferred by employers in Dubai, UAE, Saudi Arabia, and more." />
+        <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="og:site_name" content="AI Resume Pro" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://ai-resume-pro.com/resume-for-gulf-jobs" />
+        <meta property="twitter:title" content="Gulf CV Builder | Create a Professional CV for Dubai, UAE & Gulf Jobs" />
+        <meta property="twitter:description" content="Build a professional CV for jobs in the Gulf region. Our free CV maker includes templates and formats preferred by employers in Dubai, UAE, Saudi Arabia, and more." />
+        <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="twitter:site" content="@monis_vohra" />
+        <meta property="twitter:creator" content="@monis_vohra" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Ad */}

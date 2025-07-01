@@ -211,3 +211,11 @@ img {
     border: 1px solid #ddd;
   }
 }
+
+@layer base {
+  input, textarea, select {
+    @apply bg-white text-black;
+  }
+}
+
+0

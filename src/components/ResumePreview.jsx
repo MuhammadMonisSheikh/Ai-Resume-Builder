@@ -169,7 +169,7 @@ const ResumePreview = ({ content, aiContent }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-3xl w-full mx-auto p-0 border border-gray-200">
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-xl font-bold">Resume Preview</h2>

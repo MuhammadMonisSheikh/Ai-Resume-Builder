@@ -33,6 +33,7 @@ import {
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import AICommandPortal from './AICommandPortal';
+import { generateAIContent } from '../services/aiProviderService';
 
 const CustomEditor = ({ formData, onClose, documentType = 'resume' }) => {
   const [mode, setMode] = useState('visual');
@@ -408,26 +409,10 @@ ${elements.map(element => generateElementCSS(element)).join('\n')}
     }
 
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer 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`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 300,
-          temperature: 0.7
-        })
-      });
-      const result = await response.json();
-      const suggestion = result.choices?.[0]?.message?.content || '';
-      
-      // Update the element with the new content
-      updateElement(aiCommandElement.id, { content: suggestion });
+      const aiSuggestion = await generateAIContent(prompt, { max_tokens: 300, temperature: 0.7 });
+      updateElement(aiCommandElement.id, { content: aiSuggestion });
     } catch (e) {
-      alert('AI suggestion failed. Please try again.');
+      alert('All AI providers are unavailable or rate-limited. Please try again later.');
     }
     
     setAiLoading(false);
@@ -497,33 +482,18 @@ ${elements.map(element => generateElementCSS(element)).join('\n')}
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="p-2 text-gray-600 hover:text-gray-900"
-            >
-              {showPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          <div className="flex items-center space-x-2 absolute top-4 right-6 z-20">
+            <button onClick={() => setMode('visual')} title="Visual Editor" className={`p-2 rounded-full ${mode === 'visual' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-blue-600'} hover:bg-blue-700 hover:text-white transition`}>
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
             </button>
-            <button
-              onClick={() => handleDownload('html')}
-              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-            >
-              <Save className="h-4 w-4 inline mr-1" />
-              Save HTML
+            <button onClick={() => setMode('code')} title="Code Editor" className={`p-2 rounded-full ${mode === 'code' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-purple-600'} hover:bg-purple-700 hover:text-white transition`}>
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6" /></svg>
             </button>
-            <button
-              onClick={() => handleDownload('pdf')}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              <Download className="h-4 w-4 inline mr-1" />
-              Download PDF
+            <button onClick={() => handleDownload('pdf')} title="Download PDF" className="p-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
             </button>
-            <button
-              onClick={onClose}
-              className="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              Close
-            </button>
+            <button onClick={() => handleDownload('html')} title="Download HTML" className="p-2 rounded-full bg-gray-700 text-white hover:bg-gray-800 transition">HTML</button>
+            <button onClick={onClose} title="Close" className="p-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition">×</button>
           </div>
         </div>
 

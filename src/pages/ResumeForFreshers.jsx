@@ -291,31 +291,25 @@ const ResumeForFreshers = () => {
   return (
     <>
       <Helmet>
-        <title>Fresher Resume Builder | Create Your First Resume for Free</title>
-        <meta name="description" content="Just starting your career? Use our free resume builder to create a professional resume for freshers. Includes templates and examples for students and recent graduates." />
-        <script type="application/ld+json">
-          {`
-            {
-              "@context": "https://schema.org",
-              "@type": "Article",
-              "headline": "Fresher Resume Builder: Create Your First Resume for Free",
-              "author": {
-                "@type": "Organization",
-                "name": "AI Resume Pro"
-              },
-              "publisher": {
-                "@type": "Organization",
-                "name": "AI Resume Pro",
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": "https://ai-resume-pro.com/logo.png"
-                }
-              },
-              "datePublished": "2023-10-27",
-              "description": "A guide and tool for recent graduates and students to build their first professional resume for free, with templates and examples tailored for freshers."
-            }
-          `}
-        </script>
+        <title>Resume for Freshers | Free ATS Resume Builder for New Graduates</title>
+        <meta name="description" content="Create a professional, ATS-optimized resume for freshers and new graduates. Use our free AI-powered builder to land your first job with expert templates and keyword optimization." />
+        <meta name="keywords" content="fresher resume, resume for freshers, graduate cv, entry-level resume, ats resume, free resume builder, job application, new graduate cv" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://ai-resume-pro.com/resume-for-freshers" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ai-resume-pro.com/resume-for-freshers" />
+        <meta property="og:title" content="Resume for Freshers | Free ATS Resume Builder for New Graduates" />
+        <meta property="og:description" content="Create a professional, ATS-optimized resume for freshers and new graduates. Use our free AI-powered builder to land your first job with expert templates and keyword optimization." />
+        <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="og:site_name" content="AI Resume Pro" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://ai-resume-pro.com/resume-for-freshers" />
+        <meta property="twitter:title" content="Resume for Freshers | Free ATS Resume Builder for New Graduates" />
+        <meta property="twitter:description" content="Create a professional, ATS-optimized resume for freshers and new graduates. Use our free AI-powered builder to land your first job with expert templates and keyword optimization." />
+        <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="twitter:site" content="@monis_vohra" />
+        <meta property="twitter:creator" content="@monis_vohra" />
       </Helmet>
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-center mb-4">Resume Builder for Freshers</h1>

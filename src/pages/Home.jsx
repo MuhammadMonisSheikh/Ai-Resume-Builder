@@ -12,6 +12,7 @@ import PWAInstall from '../components/PWAInstall';
 import { Helmet } from 'react-helmet-async';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
+import { generateAIContent } from '../services/aiProviderService';
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('resume');
@@ -36,14 +37,12 @@ const Home = () => {
   const handleAICommand = async (e) => {
     e.preventDefault();
     if (!aiCommand.trim()) return;
-    
     try {
       setAiLoading(true);
       setAiResult('');
       setFeedback(null);
       setFeedbackComment('');
       setFeedbackSubmitted(false);
-      
       const prompt = `You are an expert career assistant and designer. ${aiCommand}
 
 Generate the requested document in professional HTML format with dynamic design that adapts to the content.
@@ -60,33 +59,15 @@ Design Requirements:
 9. Ensure the design is professional yet modern
 10. Include all necessary sections (header, summary, experience, skills, education, etc.)
 
-If the user requests code, include code blocks using markdown (\`\`\`language\ncode\n\`\`\`) or HTML <pre><code> tags.
+If the user requests code, include code blocks using markdown (code block) or HTML <pre><code> tags.
 
 Generate a complete HTML document with embedded CSS that looks professional and modern. The design should be visually appealing while maintaining readability and professionalism.`;
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer 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`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 2000,
-          temperature: 0.8
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      try {
+        const result = await generateAIContent(prompt, { max_tokens: 2000, temperature: 0.8 });
+        setAiResult(result);
+      } catch (error) {
+        setAiResult('All AI providers are unavailable or rate-limited. Please try again later.');
       }
-      
-      const result = await response.json();
-      setAiResult(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
-    } catch (error) {
-      console.error('AI command error:', error);
-      setAiResult('Sorry, there was an error generating your content. Please try again.');
     } finally {
       setAiLoading(false);
     }
@@ -135,7 +116,24 @@ Generate a complete HTML document with embedded CSS that looks professional and 
     <>
       <Helmet>
         <title>AI Resume Pro | Free ATS Resume & Cover Letter Builder</title>
-        <meta name="description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization." />
+        <meta name="description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents with expert templates and keyword optimization to land your next interview." />
+        <meta name="keywords" content="resume builder, free resume builder, cover letter generator, cv maker, ats-friendly resume, professional resume templates, resume creator, job application tools, online resume maker" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://ai-resume-pro.com/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ai-resume-pro.com/" />
+        <meta property="og:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+        <meta property="og:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+        <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="og:site_name" content="AI Resume Pro" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://ai-resume-pro.com/" />
+        <meta property="twitter:title" content="AI Resume Pro | Free ATS Resume & Cover Letter Builder" />
+        <meta property="twitter:description" content="Build a job-winning resume in minutes with our free AI-powered resume and cover letter builder. Create professional, ATS-friendly documents to land your next interview." />
+        <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="twitter:site" content="@monis_vohra" />
+        <meta property="twitter:creator" content="@monis_vohra" />
       </Helmet>
       <div className="bg-gray-50 min-h-screen">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

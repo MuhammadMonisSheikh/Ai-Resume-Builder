@@ -4,18 +4,24 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { FileText, Menu, X, Settings, Download, User, LogOut, ChevronDown } from 'lucide-react';
+import { FileText, Menu, X, Settings, Download, User, LogOut, ChevronDown, Brain, Layout, MessageCircle } from 'lucide-react';
 import PWASettings from './PWASettings';
 import UserProfile from './auth/UserProfile';
+import AILearningDashboard from './AILearningDashboard';
+import TemplateDashboard from './TemplateDashboard';
+import AIChatInterface from './AIChatInterface';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAILearningOpen, setIsAILearningOpen] = useState(false);
+  const [isTemplateDashboardOpen, setIsTemplateDashboardOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, logout, getUserDisplayName, getUserInitials } = useAuth();
   const navigate = useNavigate();
   const userMenuRef = useRef(null);
 
@@ -24,39 +30,17 @@ const Header = () => {
     console.log('Header - User state changed:', {
       isAuthenticated,
       user: user ? {
-        uid: user.uid,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        displayName: user.displayName
+        id: user.id,
+        email: user.email
+      } : null,
+      profile: profile ? {
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        full_name: profile.full_name
       } : null
     });
-  }, [user, isAuthenticated]);
-
-  // Get user initials for profile display
-  const getUserInitials = () => {
-    if (!user) return '';
-    
-    const firstName = user.firstName || user.displayName?.split(' ')[0] || '';
-    const lastName = user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '';
-    
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
-  // Get user display name
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    
-    if (user.firstName && user.lastName) {
-      return user.firstName;
-    }
-    
-    if (user.displayName) {
-      return user.displayName.split(' ')[0];
-    }
-    
-    return user.email?.split('@')[0] || 'User';
-  };
+  }, [user, profile, isAuthenticated]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -89,70 +73,104 @@ const Header = () => {
     setIsMenuOpen(false);
   };
 
+  const handleAILearningClick = () => {
+    setIsAILearningOpen(true);
+    setIsUserMenuOpen(false);
+    setIsMenuOpen(false);
+  };
+
+  const handleTemplateDashboardClick = () => {
+    setIsTemplateDashboardOpen(true);
+    setIsUserMenuOpen(false);
+    setIsMenuOpen(false);
+  };
+
+  const handleAIChatClick = () => {
+    setIsAIChatOpen(true);
+    setIsUserMenuOpen(false);
+    setIsMenuOpen(false);
+  };
+
   return (
-    <header className="bg-gray-800 shadow-md sticky top-0 z-40">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center space-x-2" aria-label="AI Resume Pro, back to homepage">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo and Navigation */}
+          <div className="flex items-center space-x-8">
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-2">
               <img className="h-8 w-auto" src="/icons/icon-192x192.png" alt="AI Resume Pro Logo" />
-              <span className="text-xl font-bold text-white">AI Resume Pro</span>
+              <span className="text-xl font-bold text-gray-900">AI Resume Pro</span>
             </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-6">
+              <NavLink to="/" className={getLinkClassName}>
+                Home
+              </NavLink>
+              <NavLink to="/resume" className={getLinkClassName}>
+                Resume Builder
+              </NavLink>
+              <NavLink to="/cover-letter" className={getLinkClassName}>
+                Cover Letter
+              </NavLink>
+            </nav>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <NavLink to="/" className={({isActive}) => `${getLinkClassName({isActive})} text-sm lg:text-base text-gray-300 hover:text-white`}>
-              Home
-            </NavLink>
-            <NavLink to="/resume-for-freshers" className={({isActive}) => `${getLinkClassName({isActive})} text-sm lg:text-base text-gray-300 hover:text-white`}>
-              Freshers
-            </NavLink>
-            <NavLink to="/resume-for-gulf-jobs" className={({isActive}) => `${getLinkClassName({isActive})} text-sm lg:text-base text-gray-300 hover:text-white`}>
-              Gulf Jobs
-            </NavLink>
-            <NavLink to="/cover-letter-for-teachers" className={({isActive}) => `${getLinkClassName({isActive})} text-sm lg:text-base text-gray-300 hover:text-white`}>
-              Teachers
-            </NavLink>
+          {/* Right side - User menu and settings */}
+          <div className="flex items-center space-x-4">
+            {/* AI Chat Button */}
+            <button
+              onClick={handleAIChatClick}
+              className="p-2 text-gray-600 hover:text-green-600 transition-colors"
+              title="AI Chat Assistant"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </button>
+
+            {/* Template Dashboard Button */}
+            <button
+              onClick={handleTemplateDashboardClick}
+              className="p-2 text-gray-600 hover:text-orange-600 transition-colors"
+              title="Template Dashboard"
+            >
+              <Layout className="h-5 w-5" />
+            </button>
+
+            {/* AI Learning Dashboard Button */}
+            <button
+              onClick={handleAILearningClick}
+              className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+              title="AI Learning Dashboard"
+            >
+              <Brain className="h-5 w-5" />
+            </button>
+
+            {/* PWA Settings Button */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="text-gray-300 hover:text-white transition-colors flex items-center space-x-1"
+              className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+              title="PWA Settings"
             >
               <Settings className="h-5 w-5" />
             </button>
-          </nav>
 
-          {/* Authentication Section */}
-          <div className="hidden md:flex items-center space-x-3">
-            {/* Debug Info - Remove this in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">
-                Auth: {isAuthenticated ? '✅' : '❌'} | 
-                User: {user ? `${user.firstName || 'No name'}` : 'None'}
-              </div>
-            )}
-            
-            {/* Offline Indicator */}
-            {!navigator.onLine && (
-              <div className="text-xs text-yellow-400 bg-yellow-900 px-2 py-1 rounded">
-                ⚠️ Offline
-              </div>
-            )}
-            
+            {/* User Menu */}
             {isAuthenticated ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {getUserInitials()}
                   </div>
-                  <span className="text-sm">{getUserDisplayName()}</span>
-                  <ChevronDown className="h-4 w-4" />
+                  <span className="hidden sm:block text-gray-700 font-medium">
+                    {getUserDisplayName()}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* User Dropdown Menu */}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50" ref={userMenuRef}>
                     <button
@@ -161,6 +179,27 @@ const Header = () => {
                     >
                       <User className="h-4 w-4" />
                       <span>My Profile</span>
+                    </button>
+                    <button
+                      onClick={handleAIChatClick}
+                      className="w-full px-4 py-2 text-left text-green-600 hover:bg-green-50 flex items-center space-x-2"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>AI Chat</span>
+                    </button>
+                    <button
+                      onClick={handleTemplateDashboardClick}
+                      className="w-full px-4 py-2 text-left text-orange-600 hover:bg-orange-50 flex items-center space-x-2"
+                    >
+                      <Layout className="h-4 w-4" />
+                      <span>Templates</span>
+                    </button>
+                    <button
+                      onClick={handleAILearningClick}
+                      className="w-full px-4 py-2 text-left text-purple-600 hover:bg-purple-50 flex items-center space-x-2"
+                    >
+                      <Brain className="h-4 w-4" />
+                      <span>AI Learning</span>
                     </button>
                     <button
                       onClick={handleLogout}
@@ -197,130 +236,97 @@ const Header = () => {
             className="md:hidden p-2 rounded-md text-gray-700 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             aria-expanded={isMenuOpen}
           >
-            <span className="sr-only">Open menu</span>
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
-      </div>
 
-      {/* Mobile Navigation - Full Screen Modal */}
-      <div
-        className={`fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="bg-gray-800 w-full h-full flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b border-gray-700">
-            <NavLink to="/" className="flex items-center space-x-2" onClick={() => setIsMenuOpen(false)}>
-              <FileText className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-white">AI Resume Pro</span>
-            </NavLink>
-            <button onClick={() => setIsMenuOpen(false)} className="p-2">
-              <X className="h-6 w-6 text-gray-300" />
-            </button>
-          </div>
-          <nav className="flex-grow flex flex-col justify-center items-center space-y-8">
+        {/* Mobile Navigation */}
+        <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t border-gray-200">
             <NavLink
               to="/"
-              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              className={({ isActive }) =>
+                `block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                }`
+              }
               onClick={() => setIsMenuOpen(false)}
             >
               Home
             </NavLink>
             <NavLink
-              to="/resume-for-freshers"
-              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              to="/resume"
+              className={({ isActive }) =>
+                `block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                }`
+              }
               onClick={() => setIsMenuOpen(false)}
             >
-              Freshers
+              Resume Builder
             </NavLink>
             <NavLink
-              to="/resume-for-gulf-jobs"
-              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
+              to="/cover-letter"
+              className={({ isActive }) =>
+                `block px-3 py-2 rounded-md text-base font-medium ${
+                  isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                }`
+              }
               onClick={() => setIsMenuOpen(false)}
             >
-              Gulf Jobs
+              Cover Letter
             </NavLink>
-            <NavLink
-              to="/cover-letter-for-teachers"
-              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Teachers
-            </NavLink>
-            <button
-              onClick={() => {
-                setIsSettingsOpen(true);
-                setIsMenuOpen(false);
-              }}
-              className="text-2xl font-bold text-white hover:text-blue-400 transition-colors flex items-center space-x-2"
-            >
-              <Settings className="h-6 w-6" />
-              <span>Settings</span>
-            </button>
             
-            {/* Mobile Authentication */}
-            <div className="border-t border-gray-700 w-1/2 my-4"></div>
-            {isAuthenticated ? (
-              <div className="flex flex-col items-center space-y-4">
-                <div className="flex items-center space-x-2 text-gray-300">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                    {getUserInitials()}
-                  </div>
-                  <span className="text-xl">{getUserDisplayName()}</span>
-                </div>
+            {/* Mobile Dashboard Links */}
+            {isAuthenticated && (
+              <>
                 <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleProfileClick();
-                  }}
-                  className="text-gray-300 hover:text-white transition-colors flex items-center space-x-2 text-xl"
+                  onClick={handleAIChatClick}
+                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-green-600 hover:bg-green-50"
                 >
-                  <User className="h-6 w-6" />
-                  <span>My Profile</span>
+                  AI Chat Assistant
                 </button>
                 <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="text-red-400 hover:text-red-300 transition-colors flex items-center space-x-2 text-xl"
+                  onClick={handleTemplateDashboardClick}
+                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-orange-600 hover:bg-orange-50"
                 >
-                  <LogOut className="h-6 w-6" />
-                  <span>Sign Out</span>
+                  Template Dashboard
                 </button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center space-y-4">
-                <Link
-                  to="/signin"
-                  className="text-gray-300 hover:text-white transition-colors text-xl"
-                  onClick={() => setIsMenuOpen(false)}
+                <button
+                  onClick={handleAILearningClick}
+                  className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-purple-600 hover:bg-purple-50"
                 >
-                  Sign In
-                </Link>
-                <Link
-                  to="/signup"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-xl"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <User className="h-6 w-6" />
-                  <span>Sign Up</span>
-                </Link>
-              </div>
+                  AI Learning Dashboard
+                </button>
+              </>
             )}
-          </nav>
+          </div>
         </div>
       </div>
 
-      {/* PWA Settings Modal */}
+      {/* Modals */}
       {isSettingsOpen && (
-        <PWASettings isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        <PWASettings onClose={() => setIsSettingsOpen(false)} />
       )}
-      
-      {/* User Profile Modal */}
+
       {isProfileOpen && (
         <UserProfile onClose={() => setIsProfileOpen(false)} />
+      )}
+
+      {isAILearningOpen && (
+        <AILearningDashboard onClose={() => setIsAILearningOpen(false)} />
+      )}
+
+      {isTemplateDashboardOpen && (
+        <TemplateDashboard onClose={() => setIsTemplateDashboardOpen(false)} />
+      )}
+
+      {isAIChatOpen && (
+        <AIChatInterface onClose={() => setIsAIChatOpen(false)} />
       )}
     </header>
   );

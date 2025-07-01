@@ -7,48 +7,45 @@ import { User, Mail, Phone, MapPin, Edit, Save, X, Camera, LogOut } from 'lucide
 import { useAuth } from '../../contexts/AuthContext';
 
 const UserProfile = ({ onClose }) => {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, profile, updateProfile, logout, getUserDisplayName, getUserInitials } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    location: user?.location || '',
-    bio: user?.bio || '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: '',
+    bio: '',
   });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Debug user data
+  // Update form data when profile changes
   useEffect(() => {
-    console.log('UserProfile - User data:', {
-      user: user ? {
-        uid: user.uid,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        displayName: user.displayName
-      } : null,
-      formData
-    });
-  }, [user, formData]);
-
-  // Update form data when user changes
-  useEffect(() => {
-    if (user) {
-      console.log('UserProfile - Updating form data with user:', user);
+    if (profile) {
+      console.log('UserProfile - Updating form data with profile:', profile);
       setFormData({
-        firstName: user.firstName || user.displayName?.split(' ')[0] || '',
-        lastName: user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        email: profile.email || user?.email || '',
+        phone: profile.phone || '',
+        location: profile.location || '',
+        bio: profile.bio || '',
+      });
+    } else if (user) {
+      // Fallback to user data if profile is not loaded yet
+      console.log('UserProfile - Using user data as fallback:', user);
+      setFormData({
+        firstName: '',
+        lastName: '',
         email: user.email || '',
-        phone: user.phone || '',
-        location: user.location || '',
-        bio: user.bio || '',
+        phone: '',
+        location: '',
+        bio: '',
       });
     }
-  }, [user]);
+  }, [profile, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -63,28 +60,35 @@ const UserProfile = ({ onClose }) => {
     setError('');
     setSuccess(false);
 
-    const result = await updateProfile(formData);
-    
-    if (result.success) {
-      setSuccess(true);
-      setIsEditing(false);
-      setTimeout(() => setSuccess(false), 3000);
-    } else {
-      setError(result.error);
+    try {
+      const result = await updateProfile(formData);
+      
+      if (result.success) {
+        setSuccess(true);
+        setIsEditing(false);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
     }
     
     setIsSubmitting(false);
   };
 
   const handleCancel = () => {
-    setFormData({
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
-      phone: user?.phone || '',
-      location: user?.location || '',
-      bio: user?.bio || '',
-    });
+    // Reset form data to current profile values
+    if (profile) {
+      setFormData({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        email: profile.email || user?.email || '',
+        phone: profile.phone || '',
+        location: profile.location || '',
+        bio: profile.bio || '',
+      });
+    }
     setIsEditing(false);
     setError('');
   };
@@ -94,30 +98,27 @@ const UserProfile = ({ onClose }) => {
     onClose();
   };
 
-  // Get user initials for profile display
-  const getUserInitials = () => {
-    if (!user) return '';
-    
-    const firstName = user.firstName || user.displayName?.split(' ')[0] || '';
-    const lastName = user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '';
-    
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
-
-  // Get user display name
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-    
-    if (user.displayName) {
-      return user.displayName;
-    }
-    
-    return user.email || 'User';
-  };
+  if (!user) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Not Authenticated</h3>
+            <p className="text-gray-600 mb-4">Please sign in to view your profile.</p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -179,9 +180,9 @@ const UserProfile = ({ onClose }) => {
               {getUserDisplayName()}
             </h3>
             <p className="text-gray-600">{user?.email}</p>
-            {!user?.firstName && (
+            {!profile && (
               <p className="text-xs text-yellow-600 mt-1">
-                ⚠️ Profile data loading... (offline mode)
+                ⚠️ Profile data loading...
               </p>
             )}
           </div>

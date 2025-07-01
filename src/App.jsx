@@ -60,6 +60,23 @@ const App = () => {
     console.log('App component mounted successfully');
   }, []);
 
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Show your custom install button
+  });
+
+  const installButton = document.getElementById('install-button');
+  if (installButton) {
+    installButton.addEventListener('click', () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt = null;
+      }
+    });
+  }
+
   return (
     <HelmetProvider>
       <AuthProvider>
@@ -108,9 +125,9 @@ const App = () => {
           <PerformanceMonitor />
           
           {/* Ad Placeholder - Only show in production */}
-          {process.env.NODE_ENV === 'production' && (
+          {/* {process.env.NODE_ENV === 'production' && (
             <AdPlaceholder adSlot="your-ad-slot-id" />
-          )}
+          )} */}
         </Router>
       </AuthProvider>
     </HelmetProvider>

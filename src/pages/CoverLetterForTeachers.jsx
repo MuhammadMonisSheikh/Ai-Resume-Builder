@@ -14,6 +14,23 @@ const CoverLetterForTeachers = () => {
       <Helmet>
         <title>Teacher Cover Letter Builder | Free Education & Teaching Templates</title>
         <meta name="description" content="Create a compelling cover letter for teaching positions with our free builder. Includes expert templates and tips for educators, from new teachers to experienced professionals." />
+        <meta name="keywords" content="teacher cover letter, cover letter builder, education cover letter, teaching job application, free cover letter, ats cover letter, teacher job, educator letter" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://ai-resume-pro.com/cover-letter-for-teachers" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ai-resume-pro.com/cover-letter-for-teachers" />
+        <meta property="og:title" content="Teacher Cover Letter Builder | Free Education & Teaching Templates" />
+        <meta property="og:description" content="Create a compelling cover letter for teaching positions with our free builder. Includes expert templates and tips for educators, from new teachers to experienced professionals." />
+        <meta property="og:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="og:site_name" content="AI Resume Pro" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://ai-resume-pro.com/cover-letter-for-teachers" />
+        <meta property="twitter:title" content="Teacher Cover Letter Builder | Free Education & Teaching Templates" />
+        <meta property="twitter:description" content="Create a compelling cover letter for teaching positions with our free builder. Includes expert templates and tips for educators, from new teachers to experienced professionals." />
+        <meta property="twitter:image" content="https://ai-resume-pro.com/og-image.png" />
+        <meta property="twitter:site" content="@monis_vohra" />
+        <meta property="twitter:creator" content="@monis_vohra" />
       </Helmet>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Ad */}

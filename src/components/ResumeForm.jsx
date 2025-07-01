@@ -14,6 +14,7 @@ import AICommandPortal from './AICommandPortal';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import AdPlaceholder from './AdPlaceholder';
+import { generateAIContent } from '../services/aiProviderService';
 
 const ResumeForm = () => {
   const { saveOfflineData, getOfflineData, isOnline } = usePWA();
@@ -194,22 +195,14 @@ User Data: ${JSON.stringify(formData)}
 
 Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS that look${generationCount > 1 ? '' : 's'} professional and modern. Include all the user's information in an organized, visually appealing layout.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer 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`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: generationCount > 1 ? 3000 : 2000,
-        temperature: 0.8
-      })
-    });
-    const result = await response.json();
-    setAiGeneratedContent(result.choices?.[0]?.message?.content || 'AI failed to generate content.');
-    setShowPreviewModal(true);
+    try {
+      const result = await generateAIContent(prompt, { max_tokens: generationCount > 1 ? 3000 : 2000, temperature: 0.8 });
+      setAiGeneratedContent(result);
+      setShowPreviewModal(true);
+    } catch (error) {
+      setAiGeneratedContent('All AI providers are unavailable or rate-limited. Please try again later.');
+      setShowPreviewModal(true);
+    }
     setIsLoading(false);
   };
 
@@ -443,29 +436,57 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
       : formData[aiCommandField] || '';
     
     if (mode === 'write') {
-      // Writing new content
-      prompt = `${command}\n\nContext: ${JSON.stringify(formData)}\n\nGenerate professional content for the ${aiCommandField} field.`;
+      // Writing new content with detailed instructions
+      prompt = `You are an expert resume writer and career coach. Generate professional, detailed content for a resume.
+
+COMMAND: ${command}
+
+CONTEXT: 
+- Job Title: ${formData.jobTitle}
+- Industry: ${formData.targetIndustry}
+- Experience Level: ${formData.experienceLevel}
+- Current Content: ${currentContent}
+
+INSTRUCTIONS:
+1. Write detailed, professional content that showcases achievements and impact
+2. Use specific metrics, numbers, and quantifiable results when possible
+3. Include action verbs and industry-specific keywords
+4. Make it compelling and ATS-friendly
+5. Focus on results, leadership, and measurable outcomes
+6. Use professional language and industry best practices
+7. Include relevant technical skills and soft skills
+8. Make it specific to the job title and industry
+
+Generate comprehensive, professional content for the ${aiCommandField} field that will help the candidate stand out to employers.`;
     } else {
-      // Improving existing content
-      prompt = `${command}\n\nCurrent content: ${currentContent}\n\nContext: ${JSON.stringify(formData)}\n\nImprove and enhance the existing content.`;
+      // Improving existing content with enhancement instructions
+      prompt = `You are an expert resume writer. Enhance and improve the existing content to make it more professional and impactful.
+
+COMMAND: ${command}
+
+CURRENT CONTENT: ${currentContent}
+
+CONTEXT:
+- Job Title: ${formData.jobTitle}
+- Industry: ${formData.targetIndustry}
+- Experience Level: ${formData.experienceLevel}
+
+ENHANCEMENT INSTRUCTIONS:
+1. Add specific metrics and quantifiable achievements
+2. Use stronger action verbs and industry keywords
+3. Make achievements more impactful and results-focused
+4. Improve clarity and professional tone
+5. Add missing details that would strengthen the content
+6. Ensure ATS optimization with relevant keywords
+7. Make it more compelling and memorable
+8. Focus on leadership, innovation, and measurable impact
+
+Enhance the existing content to make it more professional, detailed, and impactful for the ${aiCommandField} field.`;
     }
 
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer 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`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 300,
-          temperature: 0.7
-        })
-      });
-      const result = await response.json();
-      const suggestion = result.choices?.[0]?.message?.content || '';
+      const result = await generateAIContent(prompt, { max_tokens: 500, temperature: 0.7 });
+      const suggestion = result || '';
       
       if (aiCommandIndex !== null) {
         const newExperience = [...formData.experience];
@@ -475,6 +496,7 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
         setFormData(prev => ({ ...prev, [aiCommandField]: suggestion }));
       }
     } catch (e) {
+      console.error('AI suggestion failed:', e);
       alert('AI suggestion failed. Please try again.');
     }
     
@@ -1055,6 +1077,38 @@ Generate complete HTML resume${generationCount > 1 ? 's' : ''} with embedded CSS
           }}
         />
       )}
+
+      {/* Custom Editor Modal */}
+      {showCustomEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-semibold mb-4">Custom Editor</h2>
+            <CustomEditor
+              content={formData.summary}
+              onContentChange={(newContent) => setFormData({ ...formData, summary: newContent })}
+            />
+            <button
+              onClick={() => setShowCustomEditor(false)}
+              className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Editor Floating Button */}
+      <div className="fixed bottom-8 right-8 z-40">
+        <button
+          onClick={() => setShowCustomEditor(true)}
+          className="bg-purple-600 text-white rounded-full shadow-lg p-4 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg font-semibold flex items-center gap-2"
+          style={{ boxShadow: '0 4px 16px rgba(80,0,120,0.12)' }}
+          aria-label="Edit Resume"
+        >
+          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a4 4 0 01-1.414.828l-4 1a1 1 0 01-1.263-1.263l1-4a4 4 0 01.828-1.414z" /></svg>
+          Edit
+        </button>
+      </div>
     </div>
   );
 };
